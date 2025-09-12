@@ -10,6 +10,7 @@ import { useTaskCandidates } from "@/hooks/useTaskCandidates";
 import { useContentAssets } from "@/hooks/useContentAssets";
 import { usePRDDrafts } from "@/hooks/usePRDDrafts";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function Dashboard() {
   const { feedbackSources, loading: feedbackLoading } = useFeedbackSources();
@@ -42,12 +43,58 @@ export default function Dashboard() {
     // TODO: Implement PRD creation logic
   };
 
-  const handleExecuteAnalysis = () => {
+  const handleExecuteAnalysis = async () => {
+    const spreadsheetInput = document.querySelector('input[placeholder*="Google Spreadsheets"]') as HTMLInputElement;
+    const spreadsheetUrl = spreadsheetInput?.value;
+
+    if (!spreadsheetUrl) {
+      toast({
+        title: "오류",
+        description: "Google Spreadsheets 링크를 입력해주세요.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     toast({
       title: "분석 실행",
-      description: "VOC 분석을 시작합니다.",
+      description: "VOC 분석을 시작합니다. 잠시만 기다려주세요...",
     });
-    // TODO: Implement analysis execution logic
+
+    try {
+      const { data, error } = await supabase.functions.invoke('gemini-voc-analysis', {
+        body: {
+          spreadsheetUrl,
+          userPrompt: '고객 피드백을 체계적으로 분석하여 개선 과제를 도출해주세요.'
+        }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      if (data.success) {
+        toast({
+          title: "분석 완료",
+          description: "VOC 분석이 성공적으로 완료되었습니다.",
+        });
+        // 입력창 초기화
+        if (spreadsheetInput) {
+          spreadsheetInput.value = '';
+        }
+        // 데이터 새로고침 (필요시 hook의 refetch 함수 호출)
+        window.location.reload();
+      } else {
+        throw new Error(data.error || '분석 실행 중 오류가 발생했습니다.');
+      }
+    } catch (error) {
+      console.error('VOC Analysis Error:', error);
+      toast({
+        title: "분석 실패",
+        description: error.message || "VOC 분석 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleGenerateContent = (type: string) => {
