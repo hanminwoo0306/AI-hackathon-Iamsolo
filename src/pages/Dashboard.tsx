@@ -180,7 +180,7 @@ export default function Dashboard() {
       <div className="container mx-auto p-6 space-y-8">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-foreground text-korean">VOC 분석 자동화 시스템</h1>
+          <h1 className="text-3xl font-bold text-foreground text-korean">PM 업무 도와주는 루프스테이션</h1>
           <p className="text-muted-foreground text-korean mt-2">
             Google Spreadsheets VOC 데이터를 분석하여 과제와 콘텐츠를 자동 생성합니다
           </p>
