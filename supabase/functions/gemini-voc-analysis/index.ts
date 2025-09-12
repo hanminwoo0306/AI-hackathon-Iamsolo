@@ -174,7 +174,12 @@ ${feedbackTexts}
 
 1. 고객 불만사항과 요구사항을 카테고리별로 분류
 2. 각 카테고리별 빈도와 중요도 분석
-3. 고객 피드백을 바탕으로 필요한 기능 개선사항 5개를 우선순위 순으로 제안
+3. 고객 피드백을 바탕으로 필요한 기능 개선사항을 우선순위 순으로 제안
+
+**중요: 각 기능 개선사항에 대해 다음 메트릭을 평가해주세요:**
+- 개발 비용: 1~3 MM (Man Month) - 1이 가장 적은 비용, 3이 가장 많은 비용
+- 효과: 낮음(3), 보통(2), 좋음(1) - 숫자가 낮을수록 효과가 높음
+- 우선순위 점수: 개발 비용 × 효과 (낮을수록 우선순위 높음)
 
 결과는 다음 JSON 형태로 제공해주세요:
 {
@@ -189,14 +194,16 @@ ${feedbackTexts}
     {
       "title": "기능명",
       "description": "기능 설명",
-      "priority": "high/medium/low",
-      "impact_score": 1-10,
-      "implementation_difficulty": "easy/medium/hard",
-      "related_feedback_count": 관련_피드백_수
+      "development_cost": 1-3,
+      "effect_score": 1-3,
+      "priority_score": "개발_비용_x_효과_점수",
+      "related_feedback_count": 관련_피드백_수,
+      "category": "관련_카테고리"
     }
   ]
 }
 
+추천 기능은 우선순위 점수(priority_score)가 낮은 순서대로 5개를 제안해주세요.
 분석 시 실제 고객 피드백 내용을 기반으로 구체적이고 실용적인 개선사항을 제안해주세요.
 `;
 
@@ -293,13 +300,21 @@ ${feedbackTexts}
         
         // 추천 기능들을 task_candidates 테이블에 저장
         if (analysisData.recommended_features && Array.isArray(analysisData.recommended_features)) {
-          for (const feature of analysisData.recommended_features.slice(0, 5)) {
+          // 우선순위 점수 순으로 정렬 (낮은 점수가 높은 우선순위)
+          const sortedFeatures = analysisData.recommended_features
+            .sort((a, b) => (a.priority_score || 999) - (b.priority_score || 999))
+            .slice(0, 5);
+
+          for (let i = 0; i < sortedFeatures.length; i++) {
+            const feature = sortedFeatures[i];
+            const priorityLevel = i < 2 ? 'high' : i < 4 ? 'medium' : 'low';
+            
             await supabase.from('task_candidates').insert({
               title: feature.title || '기능 개선 과제',
-              description: feature.description || '',
+              description: `${feature.description || ''}\n\n[분석 메트릭]\n- 개발 비용: ${feature.development_cost || 'N/A'} MM\n- 효과: ${feature.effect_score === 1 ? '좋음' : feature.effect_score === 2 ? '보통' : feature.effect_score === 3 ? '낮음' : 'N/A'}\n- 우선순위 점수: ${feature.priority_score || 'N/A'}\n- 관련 카테고리: ${feature.category || 'N/A'}`,
               source_feedback_id: feedbackSource.id,
-              priority: feature.priority || 'medium',
-              impact_score: feature.impact_score || 5,
+              priority: priorityLevel,
+              impact_score: feature.development_cost ? (4 - feature.development_cost) * 3 : 5, // 개발비용이 낮을수록 impact 높음
               frequency_score: feature.related_feedback_count || 1,
               status: 'pending'
             });

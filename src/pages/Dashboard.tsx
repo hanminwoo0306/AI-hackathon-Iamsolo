@@ -201,14 +201,27 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-3">
-                {taskCandidates.slice(0, 3).map((task) => (
-                  <TaskCard 
-                    key={task.id} 
-                    task={task}
-                    onCreatePRD={handleCreatePRD}
-                    onUpdateStatus={handleUpdateTaskStatus}
-                  />
-                ))}
+                {taskCandidates
+                  .sort((a, b) => {
+                    // 우선순위 순서: high > medium > low, 같은 우선순위면 impact_score 높은 순
+                    const priorityOrder = { high: 3, medium: 2, low: 1 };
+                    const aPriority = priorityOrder[a.priority] || 0;
+                    const bPriority = priorityOrder[b.priority] || 0;
+                    
+                    if (aPriority !== bPriority) {
+                      return bPriority - aPriority;
+                    }
+                    return (b.impact_score || 0) - (a.impact_score || 0);
+                  })
+                  .slice(0, 5)
+                  .map((task) => (
+                    <TaskCard 
+                      key={task.id} 
+                      task={task}
+                      onCreatePRD={handleCreatePRD}
+                      onUpdateStatus={handleUpdateTaskStatus}
+                    />
+                  ))}
                 {taskCandidates.length === 0 && (
                   <div className="text-center py-8 text-muted-foreground">
                     아직 생성된 과제가 없습니다.

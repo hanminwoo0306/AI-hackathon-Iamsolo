@@ -70,9 +70,28 @@ export function TaskCard({ task, className, onCreatePRD, onUpdateStatus }: TaskC
             {task.title}
           </h3>
           {task.description && (
-            <p className="text-sm text-muted-foreground text-korean leading-relaxed line-clamp-2">
-              {task.description}
-            </p>
+            <div className="text-sm text-muted-foreground text-korean leading-relaxed">
+              {/* 메트릭 정보 먼저 표시 */}
+              {task.description.includes('[분석 메트릭]') ? (
+                <div className="space-y-2">
+                  <p className="line-clamp-2">
+                    {task.description.split('[분석 메트릭]')[0].trim()}
+                  </p>
+                  <div className="bg-secondary/30 rounded-lg p-3 text-xs">
+                    <div className="font-medium text-foreground mb-1">분석 메트릭</div>
+                    {task.description.split('[분석 메트릭]')[1]?.split('\n').map((line, idx) => (
+                      line.trim() && (
+                        <div key={idx} className="text-muted-foreground">
+                          {line.trim()}
+                        </div>
+                      )
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <p className="line-clamp-2">{task.description}</p>
+              )}
+            </div>
           )}
         </div>
 
