@@ -23,8 +23,6 @@ interface ServiceLaunch {
   image_3_url?: string;
   generated_content?: any;
   status: string;
-  created_at: string;
-  updated_at: string;
 }
 
 export function ServiceLaunchModal({ prd, onClose }: ServiceLaunchModalProps) {
@@ -175,60 +173,6 @@ export function ServiceLaunchModal({ prd, onClose }: ServiceLaunchModalProps) {
     }
   };
 
-  const generateAllContent = async () => {
-    if (!serviceLaunch) return;
-
-    const contentTypes = [
-      "FAQ",
-      "고객센터 설명자료", 
-      "서비스 소개 콘텐츠",
-      "알림 메시지",
-      "배너 메시지"
-    ];
-
-    setGeneratingContent("전체");
-    
-    try {
-      for (const contentType of contentTypes) {
-        toast({
-          title: "콘텐츠 생성 중",
-          description: `${contentType}를 생성하고 있습니다...`,
-        });
-
-        const { data, error } = await supabase.functions.invoke('gemini-content-generation', {
-          body: {
-            prd,
-            serviceLaunch,
-            contentType
-          }
-        });
-
-        if (error) throw error;
-
-        if (!data.success) {
-          throw new Error(data.error || `${contentType} 생성에 실패했습니다.`);
-        }
-
-        // 서비스 런칭 데이터 다시 로드하여 최신 상태로 업데이트
-        await loadServiceLaunch();
-      }
-
-      toast({
-        title: "모든 콘텐츠 생성 완료",
-        description: "5가지 콘텐츠가 모두 성공적으로 생성되었습니다.",
-      });
-    } catch (error) {
-      console.error('Error generating all content:', error);
-      toast({
-        title: "생성 실패",
-        description: `콘텐츠 생성 중 오류가 발생했습니다: ${error.message}`,
-        variant: "destructive",
-      });
-    } finally {
-      setGeneratingContent(null);
-    }
-  };
-
   const getImageUrl = (index: number): string | null => {
     if (!serviceLaunch) return null;
     const key = `image_${index + 1}_url` as keyof ServiceLaunch;
@@ -328,32 +272,6 @@ export function ServiceLaunchModal({ prd, onClose }: ServiceLaunchModalProps) {
                 <Zap className="h-5 w-5 mr-2" />
                 콘텐츠 자동 생성
               </h3>
-              
-              {/* 전체 생성 버튼 */}
-              <div className="mb-4">
-                <Button
-                  variant="default"
-                  size="lg"
-                  className="w-full h-auto p-4"
-                  onClick={generateAllContent}
-                  disabled={!!generatingContent}
-                >
-                  <div className="flex flex-col items-center space-y-2">
-                    <div className="flex items-center">
-                      <Zap className="h-5 w-5 mr-2" />
-                      모든 콘텐츠 한번에 생성
-                    </div>
-                    <span className="text-xs text-muted-foreground">
-                      FAQ, 고객센터 자료, 서비스 소개, 알림 메시지, 배너 메시지를 순차적으로 생성합니다
-                    </span>
-                  </div>
-                  {generatingContent === "전체" && (
-                    <Loader2 className="h-4 w-4 animate-spin ml-auto" />
-                  )}
-                </Button>
-              </div>
-
-              {/* 개별 생성 버튼들 */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 <Button
                   variant="outline"
@@ -364,7 +282,7 @@ export function ServiceLaunchModal({ prd, onClose }: ServiceLaunchModalProps) {
                   <div className="flex flex-col items-start space-y-1">
                     <div className="flex items-center">
                       <FileText className="h-4 w-4 mr-2" />
-                      고객센터 설명자료
+                      고객센터 설명자료 생성
                     </div>
                     <span className="text-xs text-muted-foreground">
                       서비스 이용 안내 자료
@@ -384,7 +302,7 @@ export function ServiceLaunchModal({ prd, onClose }: ServiceLaunchModalProps) {
                   <div className="flex flex-col items-start space-y-1">
                     <div className="flex items-center">
                       <HelpCircle className="h-4 w-4 mr-2" />
-                      FAQ
+                      FAQ 작성
                     </div>
                     <span className="text-xs text-muted-foreground">
                       자주 묻는 질문과 답변
@@ -424,10 +342,10 @@ export function ServiceLaunchModal({ prd, onClose }: ServiceLaunchModalProps) {
                   <div className="flex flex-col items-start space-y-1">
                     <div className="flex items-center">
                       <Bell className="h-4 w-4 mr-2" />
-                      알림 메시지
+                      알림 메시지 생성
                     </div>
                     <span className="text-xs text-muted-foreground">
-                      100자 이내 5개 메시지
+                      푸시 알림 및 인앱 메시지
                     </span>
                   </div>
                   {generatingContent === "알림 메시지" && (
@@ -444,10 +362,10 @@ export function ServiceLaunchModal({ prd, onClose }: ServiceLaunchModalProps) {
                   <div className="flex flex-col items-start space-y-1">
                     <div className="flex items-center">
                       <ImageIcon className="h-4 w-4 mr-2" />
-                      배너 메시지
+                      배너 메시지 생성
                     </div>
                     <span className="text-xs text-muted-foreground">
-                      모바일 배너 5개
+                      홍보 배너 및 마케팅 메시지
                     </span>
                   </div>
                   {generatingContent === "배너 메시지" && (
@@ -457,48 +375,21 @@ export function ServiceLaunchModal({ prd, onClose }: ServiceLaunchModalProps) {
               </div>
             </div>
 
-            {/* 생성된 콘텐츠 조회 */}
+            {/* 생성된 콘텐츠 미리보기 */}
             {serviceLaunch?.generated_content && (
               <>
                 <Separator />
                 <div>
-                  <h3 className="text-lg font-semibold mb-4">생성된 콘텐츠 조회</h3>
+                  <h3 className="text-lg font-semibold mb-4">생성된 콘텐츠</h3>
                   <div className="space-y-4">
                     {Object.entries(serviceLaunch.generated_content).map(([type, content]) => (
-                      <Card key={type} className="overflow-hidden">
-                        <CardHeader className="pb-3">
-                          <div className="flex items-center justify-between">
-                            <Badge variant="secondary" className="text-sm px-3 py-1">{type}</Badge>
-                            <span className="text-xs text-muted-foreground">
-                              {new Date(serviceLaunch.updated_at).toLocaleDateString('ko-KR')}
-                            </span>
-                          </div>
-                        </CardHeader>
-                        <CardContent className="pt-0">
-                          <div className="bg-muted/30 rounded-lg p-4 max-h-96 overflow-y-auto">
-                            <div className="text-sm whitespace-pre-wrap">
-                              {typeof content === 'string' ? content : JSON.stringify(content, null, 2)}
-                            </div>
-                          </div>
-                          <div className="flex justify-end mt-3">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                navigator.clipboard.writeText(
-                                  typeof content === 'string' ? content : JSON.stringify(content, null, 2)
-                                );
-                                toast({
-                                  title: "복사 완료",
-                                  description: `${type} 내용이 클립보드에 복사되었습니다.`,
-                                });
-                              }}
-                            >
-                              <FileText className="h-4 w-4 mr-2" />
-                              복사
-                            </Button>
-                          </div>
-                        </CardContent>
+                      <Card key={type} className="p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <Badge variant="secondary">{type}</Badge>
+                        </div>
+                        <div className="text-sm text-muted-foreground whitespace-pre-wrap">
+                          {typeof content === 'string' ? content : JSON.stringify(content, null, 2)}
+                        </div>
                       </Card>
                     ))}
                   </div>
