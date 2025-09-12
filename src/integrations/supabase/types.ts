@@ -14,7 +14,252 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      analysis_results: {
+        Row: {
+          analysis_type: string
+          created_at: string
+          created_by: string | null
+          id: string
+          metadata: Json | null
+          result_url: string
+          source_feedback_id: string | null
+          summary: string | null
+        }
+        Insert: {
+          analysis_type: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          metadata?: Json | null
+          result_url: string
+          source_feedback_id?: string | null
+          summary?: string | null
+        }
+        Update: {
+          analysis_type?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          metadata?: Json | null
+          result_url?: string
+          source_feedback_id?: string | null
+          summary?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analysis_results_source_feedback_id_fkey"
+            columns: ["source_feedback_id"]
+            isOneToOne: false
+            referencedRelation: "feedback_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      content_assets: {
+        Row: {
+          content: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          output_url: string | null
+          prd_id: string | null
+          status: string | null
+          target_channel: string | null
+          task_id: string | null
+          title: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          output_url?: string | null
+          prd_id?: string | null
+          status?: string | null
+          target_channel?: string | null
+          task_id?: string | null
+          title: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          output_url?: string | null
+          prd_id?: string | null
+          status?: string | null
+          target_channel?: string | null
+          task_id?: string | null
+          title?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_assets_prd_id_fkey"
+            columns: ["prd_id"]
+            isOneToOne: false
+            referencedRelation: "prd_drafts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_assets_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "task_candidates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      feedback_sources: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          last_analyzed_at: string | null
+          name: string
+          source_url: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          last_analyzed_at?: string | null
+          name: string
+          source_url: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          last_analyzed_at?: string | null
+          name?: string
+          source_url?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      prd_drafts: {
+        Row: {
+          background: string | null
+          created_at: string
+          created_by: string | null
+          edge_cases: string | null
+          id: string
+          output_url: string | null
+          problem: string | null
+          solution: string | null
+          status: string | null
+          task_id: string | null
+          title: string
+          updated_at: string
+          ux_requirements: string | null
+          version: number | null
+        }
+        Insert: {
+          background?: string | null
+          created_at?: string
+          created_by?: string | null
+          edge_cases?: string | null
+          id?: string
+          output_url?: string | null
+          problem?: string | null
+          solution?: string | null
+          status?: string | null
+          task_id?: string | null
+          title: string
+          updated_at?: string
+          ux_requirements?: string | null
+          version?: number | null
+        }
+        Update: {
+          background?: string | null
+          created_at?: string
+          created_by?: string | null
+          edge_cases?: string | null
+          id?: string
+          output_url?: string | null
+          problem?: string | null
+          solution?: string | null
+          status?: string | null
+          task_id?: string | null
+          title?: string
+          updated_at?: string
+          ux_requirements?: string | null
+          version?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prd_drafts_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "task_candidates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_candidates: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          frequency_score: number | null
+          id: string
+          impact_score: number | null
+          priority: string | null
+          source_feedback_id: string | null
+          status: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          frequency_score?: number | null
+          id?: string
+          impact_score?: number | null
+          priority?: string | null
+          source_feedback_id?: string | null
+          status?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          frequency_score?: number | null
+          id?: string
+          impact_score?: number | null
+          priority?: string | null
+          source_feedback_id?: string | null
+          status?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_candidates_source_feedback_id_fkey"
+            columns: ["source_feedback_id"]
+            isOneToOne: false
+            referencedRelation: "feedback_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
