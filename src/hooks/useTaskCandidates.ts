@@ -48,15 +48,35 @@ export function useTaskCandidates() {
         throw error;
       }
 
-      console.log('Fetched task candidates:', data?.length || 0, 'items');
+      let rows = data || [];
 
-      const tasksWithDetails = data?.map(task => ({
+      // Fallback: 데이터가 비어있다면 범위 없이 재조회하여 표시는 보장
+      if ((rows?.length || 0) === 0) {
+        console.warn('Primary range query returned 0 items. Falling back to limit query.');
+        const { data: fallback, error: fbError, count: fbCount } = await supabase
+          .from('task_candidates')
+          .select('*', { count: 'exact' })
+          .order('created_at', { ascending: false })
+          .limit(size);
+        if (fbError) {
+          console.error('Fallback fetch error:', fbError);
+        } else {
+          rows = fallback || [];
+          if (!count && typeof fbCount === 'number') {
+            setTotalCount(fbCount);
+          }
+        }
+      }
+
+      console.log('Fetched task candidates:', rows.length, 'items');
+
+      const tasksWithDetails = rows.map(task => ({
         ...task,
         priority: task.priority as 'high' | 'medium' | 'low',
         status: task.status as 'pending' | 'approved' | 'rejected' | 'in_progress' | 'completed',
         total_score: (task.frequency_score || 0) + (task.impact_score || 0),
         feedback_count: 1
-      })) || [];
+      }));
 
       setTaskCandidates(tasksWithDetails);
       setCurrentPage(page);
