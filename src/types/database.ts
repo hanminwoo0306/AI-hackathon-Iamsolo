@@ -17,6 +17,8 @@ export interface TaskCandidate {
   source_feedback_id?: string;
   frequency_score: number;
   impact_score: number;
+  development_cost?: number;  // 1-3 MM
+  effect_score?: number;      // 1: 좋음, 2: 보통, 3: 낮음
   priority: 'high' | 'medium' | 'low';
   status: 'pending' | 'approved' | 'rejected' | 'in_progress' | 'completed';
   created_by?: string;
@@ -56,20 +58,10 @@ export interface ContentAsset {
   updated_at: string;
 }
 
-export interface AnalysisResult {
-  id: string;
-  source_feedback_id: string;
-  analysis_type: 'sentiment' | 'categorization' | 'summary' | 'task_extraction';
-  result_url: string;
-  summary?: string;
-  metadata?: Record<string, any>;
-  created_by?: string;
-  created_at: string;
-}
+// AnalysisResult interface removed as table was dropped
 
 // Combined types for UI components
 export interface FeedbackSourceWithAnalysis extends FeedbackSource {
-  latest_analysis?: AnalysisResult;
   analysis_count?: number;
 }
 

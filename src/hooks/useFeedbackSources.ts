@@ -16,16 +16,7 @@ export function useFeedbackSources() {
 
       const { data, error } = await supabase
         .from('feedback_sources')
-        .select(`
-          *,
-          analysis_results (
-            id,
-            analysis_type,
-            result_url,
-            summary,
-            created_at
-          )
-        `)
+        .select('*')
         .eq('status', 'active')
         .order('created_at', { ascending: false });
 
@@ -34,17 +25,7 @@ export function useFeedbackSources() {
       const sourcesWithAnalysis = data?.map(source => ({
         ...source,
         status: source.status as 'active' | 'inactive' | 'archived',
-        latest_analysis: source.analysis_results?.[0] ? {
-          id: source.analysis_results[0].id,
-          source_feedback_id: source.id,
-          analysis_type: source.analysis_results[0].analysis_type as 'sentiment' | 'categorization' | 'summary' | 'task_extraction',
-          result_url: source.analysis_results[0].result_url,
-          summary: source.analysis_results[0].summary || undefined,
-          metadata: {},
-          created_by: undefined,
-          created_at: source.analysis_results[0].created_at
-        } : undefined,
-        analysis_count: source.analysis_results?.length || 0
+        analysis_count: 0 // analysis_results 테이블이 삭제되어 항상 0
       })) || [];
 
       setFeedbackSources(sourcesWithAnalysis);

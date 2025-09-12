@@ -14,47 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      analysis_results: {
-        Row: {
-          analysis_type: string
-          created_at: string
-          created_by: string | null
-          id: string
-          metadata: Json | null
-          result_url: string
-          source_feedback_id: string | null
-          summary: string | null
-        }
-        Insert: {
-          analysis_type: string
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          metadata?: Json | null
-          result_url: string
-          source_feedback_id?: string | null
-          summary?: string | null
-        }
-        Update: {
-          analysis_type?: string
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          metadata?: Json | null
-          result_url?: string
-          source_feedback_id?: string | null
-          summary?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "analysis_results_source_feedback_id_fkey"
-            columns: ["source_feedback_id"]
-            isOneToOne: false
-            referencedRelation: "feedback_sources"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       content_assets: {
         Row: {
           content: string | null
@@ -215,6 +174,8 @@ export type Database = {
           created_at: string
           created_by: string | null
           description: string | null
+          development_cost: number | null
+          effect_score: number | null
           frequency_score: number | null
           id: string
           impact_score: number | null
@@ -228,6 +189,8 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description?: string | null
+          development_cost?: number | null
+          effect_score?: number | null
           frequency_score?: number | null
           id?: string
           impact_score?: number | null
@@ -241,6 +204,8 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description?: string | null
+          development_cost?: number | null
+          effect_score?: number | null
           frequency_score?: number | null
           id?: string
           impact_score?: number | null

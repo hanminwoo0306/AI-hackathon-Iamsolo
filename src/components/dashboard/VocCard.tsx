@@ -83,21 +83,7 @@ export function VocCard({ feedbackSource, className, onAnalyze, onCreateTask }: 
             </span>
           </div>
 
-          {feedbackSource.latest_analysis && (
-            <div className="p-3 bg-muted/30 rounded-lg">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-medium text-foreground">최근 분석</span>
-                <Badge variant="outline" className="text-xs">
-                  {analysisTypeLabels[feedbackSource.latest_analysis.analysis_type]}
-                </Badge>
-              </div>
-              {feedbackSource.latest_analysis.summary && (
-                <p className="text-xs text-muted-foreground line-clamp-2">
-                  {feedbackSource.latest_analysis.summary}
-                </p>
-              )}
-            </div>
-          )}
+          {/* analysis_results 테이블이 삭제되어 최근 분석 정보는 표시하지 않음 */}
         </div>
 
         {/* Actions */}
