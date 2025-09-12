@@ -227,13 +227,15 @@ serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('PRD Generation Error:', error)
+    const msg = error?.message || 'Unknown error'
+    const status = msg.includes('Authorization header is required') || msg.includes('User authentication failed') ? 401 : 500
     return new Response(JSON.stringify({
       success: false,
-      error: error.message
+      error: msg
     }), {
-      status: 500,
+      status,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   }
