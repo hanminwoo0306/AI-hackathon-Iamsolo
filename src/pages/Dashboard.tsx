@@ -17,7 +17,7 @@ import { TaskCandidateWithDetails, PRDDraft } from "@/types/database";
 import { useState } from "react";
 
 export default function Dashboard() {
-  const { feedbackSources, loading: feedbackLoading } = useFeedbackSources();
+  const { feedbackSources, loading: feedbackLoading, refetch: refetchSources } = useFeedbackSources();
   const { taskCandidates, loading: tasksLoading, updateTaskStatus, refetch: refetchTasks } = useTaskCandidates();
   const { contentAssets, loading: contentLoading, updateContentStatus } = useContentAssets();
   const { prdDrafts, loading: prdLoading, refetch: refetchPRDs } = usePRDDrafts();
@@ -119,8 +119,12 @@ export default function Dashboard() {
         if (spreadsheetInput) {
           spreadsheetInput.value = '';
         }
-        // 데이터 새로고침 (필요시 hook의 refetch 함수 호출)
-        window.location.reload();
+        // 영역만 갱신
+        await Promise.all([
+          refetchTasks(),
+          refetchSources(),
+          refetchPRDs(),
+        ]);
       } else {
         throw new Error(data.error || '분석 실행 중 오류가 발생했습니다.');
       }

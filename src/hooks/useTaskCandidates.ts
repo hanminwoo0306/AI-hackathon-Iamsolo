@@ -16,20 +16,7 @@ export function useTaskCandidates() {
 
       const { data, error } = await supabase
         .from('task_candidates')
-        .select(`
-          *,
-          feedback_sources (
-            id,
-            name,
-            source_url,
-            status,
-            description,
-            last_analyzed_at,
-            created_by,
-            created_at,
-            updated_at
-          )
-        `)
+        .select(`*`)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -38,12 +25,8 @@ export function useTaskCandidates() {
         ...task,
         priority: task.priority as 'high' | 'medium' | 'low',
         status: task.status as 'pending' | 'approved' | 'rejected' | 'in_progress' | 'completed',
-        source_feedback: task.feedback_sources ? {
-          ...task.feedback_sources,
-          status: task.feedback_sources.status as 'active' | 'inactive' | 'archived'
-        } : undefined,
-        total_score: task.frequency_score + task.impact_score,
-        feedback_count: 1 // This would need to be calculated based on actual feedback links
+        total_score: (task.frequency_score || 0) + (task.impact_score || 0),
+        feedback_count: 1
       })) || [];
 
       setTaskCandidates(tasksWithDetails);
