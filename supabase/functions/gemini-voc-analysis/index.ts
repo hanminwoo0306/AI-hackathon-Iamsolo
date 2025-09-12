@@ -154,6 +154,37 @@ serve(async (req) => {
       });
     }
 
+    // Authenticate user to ensure created_by is set correctly
+    const authHeader = req.headers.get('Authorization') || '';
+    const projectUrl = Deno.env.get('SUPABASE_URL');
+    const anonKey = Deno.env.get('SUPABASE_ANON_KEY');
+    let userId: string | null = null;
+    try {
+      if (projectUrl && anonKey && authHeader) {
+        const authClient = createClient(projectUrl, anonKey, {
+          global: { headers: { Authorization: authHeader } },
+        });
+        const { data: { user }, error: userError } = await authClient.auth.getUser();
+        if (userError) {
+          console.error('Error fetching user from token:', userError);
+        }
+        userId = user?.id ?? null;
+      }
+    } catch (authErr) {
+      console.error('Auth client init error:', authErr);
+    }
+
+    if (!userId) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: '인증된 사용자를 확인할 수 없습니다. 로그인 후 다시 시도해주세요.',
+        http_status: 401
+      }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     console.log('Starting VOC analysis with Gemini API...');
 
     // Google Spreadsheets 데이터 읽기
@@ -265,6 +296,7 @@ ${feedbackTexts}
         status: 'analyzed',
         description: `자동 VOC 분석 결과 (${feedbackData.length}개 피드백 분석)`,
         last_analyzed_at: new Date().toISOString(),
+        created_by: userId as string,
       })
       .select()
       .single();
@@ -315,9 +347,10 @@ ${feedbackTexts}
               description: `${feature.description || ''}\n\n[분석 메트릭]\n- 개발 비용: ${feature.development_cost || 'N/A'} MM\n- 효과: ${feature.effect_score === 1 ? '좋음' : feature.effect_score === 2 ? '보통' : feature.effect_score === 3 ? '낮음' : 'N/A'}\n- 우선순위 점수: ${feature.priority_score || 'N/A'}\n- 관련 카테고리: ${feature.category || 'N/A'}`,
               source_feedback_id: feedbackSource.id,
               priority: priorityLevel,
-              impact_score: feature.development_cost ? (4 - feature.development_cost) * 3 : 5, // 개발비용이 낮을수록 impact 높음
+              impact_score: feature.development_cost ? (4 - feature.development_cost) * 3 : 5,
               frequency_score: feature.related_feedback_count || 1,
-              status: 'pending'
+              status: 'pending',
+              created_by: userId as string,
             });
           }
         }
