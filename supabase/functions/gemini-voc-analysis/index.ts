@@ -217,6 +217,7 @@ ${feedbackTexts}
       body: JSON.stringify({
         contents: [
           {
+            role: 'user',
             parts: [
               {
                 text: analysisPrompt
@@ -352,9 +353,13 @@ ${feedbackTexts}
     
     return new Response(JSON.stringify({
       success: false,
-      error: error.message
+      error: error.message,
+      hint: error.message.includes('Google Sheets') || error.message.includes('공유') || error.message.includes('접근')
+        ? '문서를 "링크가 있는 모든 사용자"로 공개하고, 올바른 시트(gid) 링크를 입력해주세요.'
+        : undefined,
+      http_status: statusCode
     }), {
-      status: statusCode,
+      status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }

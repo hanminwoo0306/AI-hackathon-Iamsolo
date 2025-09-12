@@ -165,11 +165,20 @@ export default function Dashboard() {
       } else {
         throw new Error(data.error || '분석 실행 중 오류가 발생했습니다.');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('VOC Analysis Error:', error);
+      const message = error?.message || 'VOC 분석 중 오류가 발생했습니다.';
+      let description = message;
+      if (
+        message.includes('Google Sheets') ||
+        message.includes('공유') ||
+        message.includes('접근')
+      ) {
+        description = 'Google 스프레드시트를 "링크가 있는 모든 사용자"로 공개하고, 올바른 시트(gid) 링크를 입력해주세요.';
+      }
       toast({
         title: "분석 실패",
-        description: error.message || "VOC 분석 중 오류가 발생했습니다.",
+        description,
         variant: "destructive",
       });
     }
