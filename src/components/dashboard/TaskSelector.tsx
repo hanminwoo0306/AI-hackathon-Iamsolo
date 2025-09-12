@@ -3,14 +3,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { TrendingUp, Clock, FileText } from "lucide-react";
+import { TrendingUp, Clock, FileText, ChevronLeft, ChevronRight } from "lucide-react";
 import { TaskCandidateWithDetails } from "@/types/database";
 import { cn } from "@/lib/utils";
 
 interface TaskSelectorProps {
   tasks: TaskCandidateWithDetails[];
+  totalCount: number;
+  currentPage: number;
+  totalPages: number;
   onCreatePRD: (selectedTask: TaskCandidateWithDetails) => void;
+  onNextPage: () => void;
+  onPrevPage: () => void;
+  onGoToPage: (page: number) => void;
   loading?: boolean;
 }
 
@@ -28,7 +33,17 @@ const statusLabels = {
   completed: "완료",
 };
 
-export function TaskSelector({ tasks, onCreatePRD, loading }: TaskSelectorProps) {
+export function TaskSelector({ 
+  tasks, 
+  totalCount, 
+  currentPage, 
+  totalPages, 
+  onCreatePRD, 
+  onNextPage, 
+  onPrevPage, 
+  onGoToPage, 
+  loading 
+}: TaskSelectorProps) {
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
   const selectedTask = tasks.find(task => task.id === selectedTaskId);
@@ -134,6 +149,59 @@ export function TaskSelector({ tasks, onCreatePRD, loading }: TaskSelectorProps)
         })}
       </div>
       
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="pt-4 border-t">
+          <div className="flex items-center justify-between mb-4">
+            <div className="text-sm text-muted-foreground">
+              총 {totalCount}개 중 {((currentPage - 1) * 20) + 1}-{Math.min(currentPage * 20, totalCount)}개 표시
+            </div>
+            <div className="flex items-center space-x-2">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={onPrevPage}
+                disabled={currentPage === 1 || loading}
+              >
+                <ChevronLeft className="h-4 w-4" />
+                이전
+              </Button>
+              
+              <div className="flex items-center space-x-1">
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  const startPage = Math.max(1, currentPage - 2);
+                  const pageNum = startPage + i;
+                  if (pageNum > totalPages) return null;
+                  
+                  return (
+                    <Button
+                      key={pageNum}
+                      variant={pageNum === currentPage ? "default" : "outline"}
+                      size="sm"
+                      className="w-8 h-8 p-0"
+                      onClick={() => onGoToPage(pageNum)}
+                      disabled={loading}
+                    >
+                      {pageNum}
+                    </Button>
+                  );
+                })}
+              </div>
+              
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={onNextPage}
+                disabled={currentPage === totalPages || loading}
+              >
+                다음
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="pt-4 border-t">
         <Button 
           className="w-full btn-gradient" 

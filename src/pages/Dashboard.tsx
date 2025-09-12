@@ -18,7 +18,7 @@ import { useState } from "react";
 
 export default function Dashboard() {
   const { feedbackSources, loading: feedbackLoading, refetch: refetchSources } = useFeedbackSources();
-  const { taskCandidates, loading: tasksLoading, updateTaskStatus, refetch: refetchTasks } = useTaskCandidates();
+  const { taskCandidates, loading: tasksLoading, updateTaskStatus, refetch: refetchTasks, totalCount, currentPage, totalPages, nextPage, prevPage, goToPage } = useTaskCandidates();
   const { contentAssets, loading: contentLoading, updateContentStatus } = useContentAssets();
   const { prdDrafts, loading: prdLoading, refetch: refetchPRDs } = usePRDDrafts();
   const { toast } = useToast();
@@ -249,9 +249,14 @@ export default function Dashboard() {
                     const bPriority = (b.development_cost || 1) * (b.effect_score || 1);
                     return aPriority - bPriority;
                   })
-                  .slice(0, 10)
                 }
+                totalCount={totalCount}
+                currentPage={currentPage}
+                totalPages={totalPages}
                 onCreatePRD={handleCreatePRD}
+                onNextPage={nextPage}
+                onPrevPage={prevPage}
+                onGoToPage={goToPage}
                 loading={tasksLoading}
               />
             </CardContent>
