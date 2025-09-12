@@ -19,10 +19,11 @@ export function useTaskCandidates() {
 
       console.log('Fetching task candidates...', { page, size });
 
-      // 총 개수 조회
+      // 총 개수 조회 (head 사용하지 않음)
       const { count, error: countError } = await supabase
         .from('task_candidates')
-        .select('*', { count: 'exact', head: true });
+        .select('*', { count: 'exact' })
+        .range(0, 0);
 
       if (countError) {
         console.error('Count error:', countError);
