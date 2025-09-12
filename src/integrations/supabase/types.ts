@@ -77,7 +77,7 @@ export type Database = {
       feedback_sources: {
         Row: {
           created_at: string
-          created_by: string | null
+          created_by: string
           description: string | null
           id: string
           last_analyzed_at: string | null
@@ -88,7 +88,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          created_by?: string | null
+          created_by?: string
           description?: string | null
           id?: string
           last_analyzed_at?: string | null
@@ -99,7 +99,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          created_by?: string | null
+          created_by?: string
           description?: string | null
           id?: string
           last_analyzed_at?: string | null
