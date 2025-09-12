@@ -8,7 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { PRDDetailModal } from "@/components/dashboard/PRDDetailModal";
-import { MessageSquare, FileText, Zap, Plus, ExternalLink, Play, Edit, Eye, Calendar } from "lucide-react";
+import { ServiceLaunchModal } from "@/components/dashboard/ServiceLaunchModal";
+import { MessageSquare, FileText, Zap, Plus, ExternalLink, Play, Edit, Eye, Calendar, Rocket } from "lucide-react";
 import { useFeedbackSources } from "@/hooks/useFeedbackSources";
 import { useTaskCandidates } from "@/hooks/useTaskCandidates";
 import { useContentAssets } from "@/hooks/useContentAssets";
@@ -25,6 +26,7 @@ export default function Dashboard() {
   const { prdDrafts, loading: prdLoading, refetch: refetchPRDs } = usePRDDrafts();
   const { toast } = useToast();
   const [selectedPRD, setSelectedPRD] = useState<PRDDraft | null>(null);
+  const [serviceLaunchPRD, setServiceLaunchPRD] = useState<PRDDraft | null>(null);
 
   const handleAnalyzeFeedback = (source: any) => {
     toast({
@@ -306,6 +308,14 @@ export default function Dashboard() {
                         편집
                       </Button>
                       <PRDDetailModal prd={prd} onEdit={setSelectedPRD} />
+                      <Button 
+                        variant="default" 
+                        size="sm"
+                        onClick={() => setServiceLaunchPRD(prd)}
+                      >
+                        <Rocket className="h-4 w-4 mr-1" />
+                        서비스 런칭
+                      </Button>
                     </div>
                   </div>
                 ))}
@@ -320,51 +330,27 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          {/* 4. 자동화 실행 영역 */}
+          {/* 4. 서비스 런칭 안내 영역 */}
           <Card className="glass-card">
             <CardHeader>
               <CardTitle className="text-korean flex items-center">
-                <Zap className="h-5 w-5 mr-2" />
-                자동화 실행
+                <Rocket className="h-5 w-5 mr-2" />
+                서비스 런칭 준비
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 gap-3">
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start"
-                  onClick={() => handleGenerateContent("고객센터 설명자료")}
-                >
-                  고객센터 설명자료 생성
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start"
-                  onClick={() => handleGenerateContent("FAQ")}
-                >
-                  FAQ 작성
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start"
-                  onClick={() => handleGenerateContent("서비스 콘텐츠")}
-                >
-                  서비스 콘텐츠 생성
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start"
-                  onClick={() => handleGenerateContent("알림 메시지")}
-                >
-                  알림 메시지 생성
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start"
-                  onClick={() => handleGenerateContent("배너 메시지")}
-                >
-                  배너 메시지 생성
-                </Button>
+              <div className="text-center py-8">
+                <Rocket className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                <p className="text-muted-foreground mb-4">
+                  PRD를 선택한 후 서비스 런칭 버튼을 클릭하여<br />
+                  서비스 런칭에 필요한 콘텐츠를 자동 생성하세요.
+                </p>
+                <div className="text-sm text-muted-foreground space-y-1">
+                  <p>• 서비스 화면 이미지 3개 업로드</p>
+                  <p>• 고객센터 설명자료 자동 생성</p>
+                  <p>• FAQ, 서비스 소개 콘텐츠 생성</p>
+                  <p>• 알림 메시지, 배너 메시지 생성</p>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -384,6 +370,14 @@ export default function Dashboard() {
               />
             </div>
           </div>
+        )}
+
+        {/* Service Launch Modal */}
+        {serviceLaunchPRD && (
+          <ServiceLaunchModal
+            prd={serviceLaunchPRD}
+            onClose={() => setServiceLaunchPRD(null)}
+          />
         )}
       </div>
     </div>

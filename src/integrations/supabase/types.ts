@@ -196,6 +196,45 @@ export type Database = {
         }
         Relationships: []
       }
+      service_launches: {
+        Row: {
+          created_at: string
+          created_by: string
+          generated_content: Json | null
+          id: string
+          image_1_url: string | null
+          image_2_url: string | null
+          image_3_url: string | null
+          prd_id: string
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          generated_content?: Json | null
+          id?: string
+          image_1_url?: string | null
+          image_2_url?: string | null
+          image_3_url?: string | null
+          prd_id: string
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          generated_content?: Json | null
+          id?: string
+          image_1_url?: string | null
+          image_2_url?: string | null
+          image_3_url?: string | null
+          prd_id?: string
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       task_candidates: {
         Row: {
           created_at: string
