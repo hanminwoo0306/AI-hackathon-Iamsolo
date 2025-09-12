@@ -292,10 +292,10 @@ export default function Dashboard() {
                 console.log('[Dashboard] Passing tasks to TaskSelector:', { len: sortedTasks.length, totalCount, currentPage, totalPages });
                 return (
                   <TaskSelector
-                    tasks={sortedTasks.slice(0, 5)}
-                    totalCount={Math.min(totalCount, 5)}
+                    tasks={sortedTasks}
+                    totalCount={totalCount}
                     currentPage={currentPage}
-                    totalPages={Math.ceil(Math.min(totalCount, 5) / 5)}
+                    totalPages={totalPages}
                     onCreatePRD={handleCreatePRD}
                     onNextPage={nextPage}
                     onPrevPage={prevPage}
