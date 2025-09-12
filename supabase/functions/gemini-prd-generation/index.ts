@@ -1,4 +1,5 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -18,6 +19,34 @@ serve(async (req) => {
     if (!task) {
       throw new Error('Task information is required')
     }
+
+    // 인증 확인
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) {
+      throw new Error('Authorization header is required')
+    }
+
+    // Supabase 클라이언트 생성 (사용자 컨텍스트 유지)
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      throw new Error('Supabase configuration not found')
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+      global: {
+        headers: { Authorization: authHeader },
+      },
+    })
+
+    // 사용자 인증 확인
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError || !user) {
+      throw new Error('User authentication failed')
+    }
+
+    console.log('Authenticated user:', user.id)
 
     const geminiApiKey = Deno.env.get('GEMINI_API_KEY')
     if (!geminiApiKey) {
@@ -162,19 +191,38 @@ serve(async (req) => {
 
     console.log('PRD generation completed successfully')
 
+    // PRD를 데이터베이스에 저장
+    const prdData = {
+      title: task.title,
+      task_id: task.id,
+      background: sections.background || generatedContent.substring(0, 1000),
+      problem: sections.problem || '',
+      solution: sections.solution || '',
+      ux_requirements: sections.ux_requirements || '',
+      edge_cases: sections.edge_cases || '',
+      status: 'draft',
+      version: 1,
+      created_by: user.id
+    }
+
+    console.log('Saving PRD to database:', prdData)
+
+    const { data: savedPRD, error: dbError } = await supabase
+      .from('prd_drafts')
+      .insert([prdData])
+      .select()
+      .single()
+
+    if (dbError) {
+      console.error('Database insert error:', dbError)
+      throw new Error(`Database insert failed: ${dbError.message}`)
+    }
+
+    console.log('PRD saved successfully:', savedPRD)
+
     return new Response(JSON.stringify({
       success: true,
-      prd: {
-        title: task.title,
-        task_id: task.id,
-        background: sections.background || generatedContent.substring(0, 1000),
-        problem: sections.problem || '',
-        solution: sections.solution || '',
-        ux_requirements: sections.ux_requirements || '',
-        edge_cases: sections.edge_cases || '',
-        status: 'draft',
-        version: 1
-      }
+      prd: savedPRD
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })

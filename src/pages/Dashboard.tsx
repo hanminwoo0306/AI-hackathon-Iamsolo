@@ -54,13 +54,6 @@ export default function Dashboard() {
       if (error) throw error;
 
       if (data.success && data.prd) {
-        // Save PRD to database
-        const { error: insertError } = await supabase
-          .from('prd_drafts')
-          .insert([data.prd]);
-
-        if (insertError) throw insertError;
-
         toast({
           title: "PRD 생성 완료",
           description: "PRD가 성공적으로 생성되었습니다.",

@@ -114,7 +114,7 @@ export type Database = {
         Row: {
           background: string | null
           created_at: string
-          created_by: string | null
+          created_by: string
           edge_cases: string | null
           id: string
           output_url: string | null
@@ -130,7 +130,7 @@ export type Database = {
         Insert: {
           background?: string | null
           created_at?: string
-          created_by?: string | null
+          created_by?: string
           edge_cases?: string | null
           id?: string
           output_url?: string | null
@@ -146,7 +146,7 @@ export type Database = {
         Update: {
           background?: string | null
           created_at?: string
-          created_by?: string | null
+          created_by?: string
           edge_cases?: string | null
           id?: string
           output_url?: string | null
