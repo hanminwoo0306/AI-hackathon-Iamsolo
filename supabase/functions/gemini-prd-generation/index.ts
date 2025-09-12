@@ -104,6 +104,7 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           contents: [{
+            role: 'user',
             parts: [{
               text: prompt
             }]
