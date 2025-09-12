@@ -13,7 +13,7 @@ import { useFeedbackSources } from "@/hooks/useFeedbackSources";
 import { useTaskCandidates } from "@/hooks/useTaskCandidates";
 import { useContentAssets } from "@/hooks/useContentAssets";
 import { usePRDDrafts } from "@/hooks/usePRDDrafts";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { TaskCandidateWithDetails, PRDDraft } from "@/types/database";
 import { useState } from "react";
