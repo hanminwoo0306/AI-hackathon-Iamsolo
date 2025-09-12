@@ -96,7 +96,7 @@ serve(async (req) => {
     console.log('Calling Gemini API for PRD generation...')
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`,
       {
         method: 'POST',
         headers: {
@@ -104,6 +104,7 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           contents: [{
+            role: 'user',
             parts: [{
               text: prompt
             }]
@@ -112,7 +113,7 @@ serve(async (req) => {
             temperature: 0.7,
             topK: 40,
             topP: 0.95,
-            maxOutputTokens: 4096,
+            maxOutputTokens: 8192,
           }
         })
       }
@@ -120,8 +121,12 @@ serve(async (req) => {
 
     if (!response.ok) {
       const errorText = await response.text()
-      console.error('Gemini API Error:', response.status, errorText)
-      throw new Error(`Gemini API error: ${response.status}`)
+      console.error('Gemini API Error Details:', {
+        status: response.status,
+        statusText: response.statusText,
+        errorText: errorText
+      })
+      throw new Error(`Gemini API 호출 실패: status=${response.status}, message=${errorText}`)
     }
 
     const data = await response.json()
@@ -228,14 +233,23 @@ serve(async (req) => {
     })
 
   } catch (error: any) {
-    console.error('PRD Generation Error:', error)
-    const msg = error?.message || 'Unknown error'
-    const status = msg.includes('Authorization header is required') || msg.includes('User authentication failed') ? 401 : 500
+    console.error('PRD Generation Error Details:', {
+      message: error?.message,
+      stack: error?.stack,
+      name: error?.name
+    })
+    
+    const errorMessage = error?.message || 'Unknown error occurred'
+    const status = errorMessage.includes('Authorization') || 
+                  errorMessage.includes('User authentication failed') ? 401 : 500
+    
     return new Response(JSON.stringify({
       success: false,
-      error: msg
+      error: errorMessage,
+      http_status: status,
+      details: (Deno.env.get('NODE_ENV') === 'development') ? error?.stack : undefined
     }), {
-      status,
+      status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   }

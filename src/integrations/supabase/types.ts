@@ -18,7 +18,7 @@ export type Database = {
         Row: {
           content: string | null
           created_at: string
-          created_by: string | null
+          created_by: string
           id: string
           output_url: string | null
           prd_id: string | null
@@ -32,7 +32,7 @@ export type Database = {
         Insert: {
           content?: string | null
           created_at?: string
-          created_by?: string | null
+          created_by?: string
           id?: string
           output_url?: string | null
           prd_id?: string | null
@@ -46,7 +46,7 @@ export type Database = {
         Update: {
           content?: string | null
           created_at?: string
-          created_by?: string | null
+          created_by?: string
           id?: string
           output_url?: string | null
           prd_id?: string | null
@@ -77,7 +77,7 @@ export type Database = {
       feedback_sources: {
         Row: {
           created_at: string
-          created_by: string | null
+          created_by: string
           description: string | null
           id: string
           last_analyzed_at: string | null
@@ -88,7 +88,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          created_by?: string | null
+          created_by?: string
           description?: string | null
           id?: string
           last_analyzed_at?: string | null
@@ -99,7 +99,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          created_by?: string | null
+          created_by?: string
           description?: string | null
           id?: string
           last_analyzed_at?: string | null
@@ -169,10 +169,76 @@ export type Database = {
           },
         ]
       }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string | null
+          email: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      service_launches: {
+        Row: {
+          created_at: string
+          created_by: string
+          generated_content: Json | null
+          id: string
+          image_1_url: string | null
+          image_2_url: string | null
+          image_3_url: string | null
+          prd_id: string
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          generated_content?: Json | null
+          id?: string
+          image_1_url?: string | null
+          image_2_url?: string | null
+          image_3_url?: string | null
+          prd_id: string
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          generated_content?: Json | null
+          id?: string
+          image_1_url?: string | null
+          image_2_url?: string | null
+          image_3_url?: string | null
+          prd_id?: string
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       task_candidates: {
         Row: {
           created_at: string
-          created_by: string | null
+          created_by: string
           description: string | null
           development_cost: number | null
           effect_score: number | null
@@ -187,7 +253,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          created_by?: string | null
+          created_by?: string
           description?: string | null
           development_cost?: number | null
           effect_score?: number | null
@@ -202,7 +268,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          created_by?: string | null
+          created_by?: string
           description?: string | null
           development_cost?: number | null
           effect_score?: number | null
