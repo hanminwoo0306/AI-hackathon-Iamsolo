@@ -1,5 +1,7 @@
 import { VocCard } from "@/components/dashboard/VocCard";
 import { TaskCard } from "@/components/dashboard/TaskCard";
+import { TaskSelector } from "@/components/dashboard/TaskSelector";
+import { PRDChatInterface } from "@/components/dashboard/PRDChatInterface";
 import { ContentCard } from "@/components/dashboard/ContentCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,13 +13,16 @@ import { useContentAssets } from "@/hooks/useContentAssets";
 import { usePRDDrafts } from "@/hooks/usePRDDrafts";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { TaskCandidateWithDetails, PRDDraft } from "@/types/database";
+import { useState } from "react";
 
 export default function Dashboard() {
   const { feedbackSources, loading: feedbackLoading } = useFeedbackSources();
-  const { taskCandidates, loading: tasksLoading, updateTaskStatus } = useTaskCandidates();
+  const { taskCandidates, loading: tasksLoading, updateTaskStatus, refetch: refetchTasks } = useTaskCandidates();
   const { contentAssets, loading: contentLoading, updateContentStatus } = useContentAssets();
-  const { prdDrafts, loading: prdLoading } = usePRDDrafts();
+  const { prdDrafts, loading: prdLoading, refetch: refetchPRDs } = usePRDDrafts();
   const { toast } = useToast();
+  const [selectedPRD, setSelectedPRD] = useState<PRDDraft | null>(null);
 
   const handleAnalyzeFeedback = (source: any) => {
     toast({
@@ -35,12 +40,44 @@ export default function Dashboard() {
     // TODO: Implement task creation logic
   };
 
-  const handleCreatePRD = (task: any) => {
-    toast({
-      title: "PRD 생성",
-      description: `${task.title}에 대한 PRD를 생성합니다.`,
-    });
-    // TODO: Implement PRD creation logic
+  const handleCreatePRD = async (task: TaskCandidateWithDetails) => {
+    try {
+      toast({
+        title: "PRD 생성 중",
+        description: `${task.title}에 대한 PRD를 생성하고 있습니다...`,
+      });
+
+      const { data, error } = await supabase.functions.invoke('gemini-prd-generation', {
+        body: { task }
+      });
+
+      if (error) throw error;
+
+      if (data.success && data.prd) {
+        // Save PRD to database
+        const { error: insertError } = await supabase
+          .from('prd_drafts')
+          .insert([data.prd]);
+
+        if (insertError) throw insertError;
+
+        toast({
+          title: "PRD 생성 완료",
+          description: "PRD가 성공적으로 생성되었습니다.",
+        });
+
+        await refetchPRDs();
+      } else {
+        throw new Error(data.error || 'PRD 생성에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('PRD Creation Error:', error);
+      toast({
+        title: "PRD 생성 실패",
+        description: error.message || "PRD 생성 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleExecuteAnalysis = async () => {
@@ -200,40 +237,19 @@ export default function Dashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-3">
-                {taskCandidates
+              <TaskSelector
+                tasks={taskCandidates
                   .sort((a, b) => {
-                    // 우선순위 순서: high > medium > low, 같은 우선순위면 impact_score 높은 순
-                    const priorityOrder = { high: 3, medium: 2, low: 1 };
-                    const aPriority = priorityOrder[a.priority] || 0;
-                    const bPriority = priorityOrder[b.priority] || 0;
-                    
-                    if (aPriority !== bPriority) {
-                      return bPriority - aPriority;
-                    }
-                    return (b.impact_score || 0) - (a.impact_score || 0);
+                    // 개발비용 * 효과점수가 낮을수록 우선순위가 높음
+                    const aPriority = (a.development_cost || 1) * (a.effect_score || 1);
+                    const bPriority = (b.development_cost || 1) * (b.effect_score || 1);
+                    return aPriority - bPriority;
                   })
-                  .slice(0, 5)
-                  .map((task) => (
-                    <TaskCard 
-                      key={task.id} 
-                      task={task}
-                      onCreatePRD={handleCreatePRD}
-                      onUpdateStatus={handleUpdateTaskStatus}
-                    />
-                  ))}
-                {taskCandidates.length === 0 && (
-                  <div className="text-center py-8 text-muted-foreground">
-                    아직 생성된 과제가 없습니다.
-                  </div>
-                )}
-              </div>
-              
-              <div className="pt-4 border-t">
-                <Button className="w-full" onClick={() => handleCreatePRD(null)}>
-                  PRD 생성
-                </Button>
-              </div>
+                  .slice(0, 10)
+                }
+                onCreatePRD={handleCreatePRD}
+                loading={tasksLoading}
+              />
             </CardContent>
           </Card>
 
@@ -247,15 +263,24 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {prdDrafts.slice(0, 3).map((prd) => (
+                {prdDrafts.slice(0, 5).map((prd) => (
                   <div key={prd.id} className="p-3 border rounded-lg">
-                    <h4 className="font-medium">{prd.title}</h4>
+                    <h4 className="font-medium text-korean">{prd.title}</h4>
                     <p className="text-sm text-muted-foreground mt-1">
-                      상태: {prd.status} | {new Date(prd.created_at).toLocaleDateString('ko-KR')}
+                      상태: {prd.status} | 버전: {prd.version} | {new Date(prd.created_at).toLocaleDateString('ko-KR')}
                     </p>
-                    <Button variant="outline" size="sm" className="mt-2">
-                      전체 조회
-                    </Button>
+                    <div className="flex space-x-2 mt-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setSelectedPRD(prd)}
+                      >
+                        편집
+                      </Button>
+                      <Button variant="outline" size="sm">
+                        전체 조회
+                      </Button>
+                    </div>
                   </div>
                 ))}
                 {prdDrafts.length === 0 && (
@@ -316,6 +341,22 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {/* PRD Chat Interface Modal */}
+        {selectedPRD && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="w-full max-w-4xl">
+              <PRDChatInterface
+                prd={selectedPRD}
+                onUpdate={(updatedPRD) => {
+                  setSelectedPRD(updatedPRD);
+                  refetchPRDs();
+                }}
+                onClose={() => setSelectedPRD(null)}
+              />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
