@@ -46,72 +46,32 @@ export default function Dashboard() {
 
   const handleCreatePRD = async (task: TaskCandidateWithDetails) => {
     try {
-      console.log('PRD 생성 시작:', task);
-      
       toast({
         title: "PRD 생성 중",
         description: `${task.title}에 대한 PRD를 생성하고 있습니다...`,
       });
 
-      const response = await supabase.functions.invoke('gemini-prd-generation', {
+      const { data, error } = await supabase.functions.invoke('gemini-prd-generation', {
         body: { task }
       });
 
-      console.log('Edge Function Response:', response);
+      if (error) throw error;
 
-      // 응답 상태 확인
-      if (response.error) {
-        console.error('Edge Function Error:', response.error);
-        throw new Error(`PRD 생성 실패: ${response.error.message || response.error}`);
+      if (data.success && data.prd) {
+        toast({
+          title: "PRD 생성 완료",
+          description: "PRD가 성공적으로 생성되었습니다.",
+        });
+
+        await refetchPRDs();
+      } else {
+        throw new Error(data.error || 'PRD 생성에 실패했습니다.');
       }
-
-      if (!response.data) {
-        throw new Error('PRD 생성 실패: 응답 데이터가 없습니다');
-      }
-
-      const data = response.data;
-      
-      if (!data.success) {
-        const errorMessage = data.error || 'PRD 생성에 실패했습니다';
-        console.error('PRD Generation failed:', errorMessage);
-        throw new Error(`PRD 생성 실패: ${errorMessage}`);
-      }
-
-      if (!data.prd) {
-        throw new Error('PRD 생성 실패: PRD 데이터가 응답에 포함되지 않았습니다');
-      }
-
-      console.log('PRD 생성 성공:', data.prd);
-      
-      toast({
-        title: "PRD 생성 완료",
-        description: "PRD가 성공적으로 생성되었습니다.",
-      });
-
-      await refetchPRDs();
-      
-    } catch (error: any) {
+    } catch (error) {
       console.error('PRD Creation Error:', error);
-      
-      let errorMessage = "PRD 생성 중 오류가 발생했습니다.";
-      
-      if (error.message) {
-        if (error.message.includes('Authorization')) {
-          errorMessage = "인증 오류가 발생했습니다. 다시 로그인해주세요.";
-        } else if (error.message.includes('GEMINI_API_KEY')) {
-          errorMessage = "AI 서비스 설정에 문제가 있습니다. 관리자에게 문의하세요.";
-        } else if (error.message.includes('rate limit')) {
-          errorMessage = "요청이 너무 많습니다. 잠시 후 다시 시도해주세요.";
-        } else if (error.message.includes('network') || error.message.includes('fetch')) {
-          errorMessage = "네트워크 연결에 문제가 있습니다. 인터넷 연결을 확인해주세요.";
-        } else {
-          errorMessage = error.message;
-        }
-      }
-      
       toast({
         title: "PRD 생성 실패",
-        description: errorMessage,
+        description: error.message || "PRD 생성 중 오류가 발생했습니다.",
         variant: "destructive",
       });
     }
@@ -165,20 +125,11 @@ export default function Dashboard() {
       } else {
         throw new Error(data.error || '분석 실행 중 오류가 발생했습니다.');
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('VOC Analysis Error:', error);
-      const message = error?.message || 'VOC 분석 중 오류가 발생했습니다.';
-      let description = message;
-      if (
-        message.includes('Google Sheets') ||
-        message.includes('공유') ||
-        message.includes('접근')
-      ) {
-        description = 'Google 스프레드시트를 "링크가 있는 모든 사용자"로 공개하고, 올바른 시트(gid) 링크를 입력해주세요.';
-      }
       toast({
         title: "분석 실패",
-        description,
+        description: error.message || "VOC 분석 중 오류가 발생했습니다.",
         variant: "destructive",
       });
     }
@@ -248,10 +199,16 @@ export default function Dashboard() {
                   placeholder="Google Spreadsheets 링크를 입력하세요" 
                   className="w-full"
                 />
-                <Button onClick={handleExecuteAnalysis} className="w-full">
-                  <Play className="h-4 w-4 mr-2" />
-                  분석 실행
-                </Button>
+                <div className="flex space-x-2">
+                  <Button onClick={handleExecuteAnalysis} className="flex-1">
+                    <Play className="h-4 w-4 mr-2" />
+                    분석 실행
+                  </Button>
+                  <Button variant="outline">
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    링크 열기
+                  </Button>
+                </div>
               </div>
               
               <div className="space-y-3 mt-6">
@@ -292,10 +249,10 @@ export default function Dashboard() {
                 console.log('[Dashboard] Passing tasks to TaskSelector:', { len: sortedTasks.length, totalCount, currentPage, totalPages });
                 return (
                   <TaskSelector
-                    tasks={sortedTasks.slice(0, 5)}
-                    totalCount={Math.min(totalCount, 5)}
+                    tasks={sortedTasks}
+                    totalCount={totalCount}
                     currentPage={currentPage}
-                    totalPages={Math.ceil(Math.min(totalCount, 5) / 5)}
+                    totalPages={totalPages}
                     onCreatePRD={handleCreatePRD}
                     onNextPage={nextPage}
                     onPrevPage={prevPage}

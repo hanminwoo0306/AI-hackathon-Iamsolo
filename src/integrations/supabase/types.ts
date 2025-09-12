@@ -18,7 +18,7 @@ export type Database = {
         Row: {
           content: string | null
           created_at: string
-          created_by: string
+          created_by: string | null
           id: string
           output_url: string | null
           prd_id: string | null
@@ -32,7 +32,7 @@ export type Database = {
         Insert: {
           content?: string | null
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           id?: string
           output_url?: string | null
           prd_id?: string | null
@@ -46,7 +46,7 @@ export type Database = {
         Update: {
           content?: string | null
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           id?: string
           output_url?: string | null
           prd_id?: string | null
@@ -77,7 +77,7 @@ export type Database = {
       feedback_sources: {
         Row: {
           created_at: string
-          created_by: string
+          created_by: string | null
           description: string | null
           id: string
           last_analyzed_at: string | null
@@ -88,7 +88,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           description?: string | null
           id?: string
           last_analyzed_at?: string | null
@@ -99,7 +99,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           description?: string | null
           id?: string
           last_analyzed_at?: string | null
@@ -238,7 +238,7 @@ export type Database = {
       task_candidates: {
         Row: {
           created_at: string
-          created_by: string
+          created_by: string | null
           description: string | null
           development_cost: number | null
           effect_score: number | null
@@ -253,7 +253,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           description?: string | null
           development_cost?: number | null
           effect_score?: number | null
@@ -268,7 +268,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           description?: string | null
           development_cost?: number | null
           effect_score?: number | null
