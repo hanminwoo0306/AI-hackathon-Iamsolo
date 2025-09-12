@@ -96,7 +96,7 @@ serve(async (req) => {
     console.log('Calling Gemini API for PRD generation...')
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`,
       {
         method: 'POST',
         headers: {
@@ -113,7 +113,7 @@ serve(async (req) => {
             temperature: 0.7,
             topK: 40,
             topP: 0.95,
-            maxOutputTokens: 4096,
+            maxOutputTokens: 8192,
           }
         })
       }
@@ -246,9 +246,10 @@ serve(async (req) => {
     return new Response(JSON.stringify({
       success: false,
       error: errorMessage,
-      details: process.env.NODE_ENV === 'development' ? error?.stack : undefined
+      http_status: status,
+      details: (Deno.env.get('NODE_ENV') === 'development') ? error?.stack : undefined
     }), {
-      status,
+      status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   }
