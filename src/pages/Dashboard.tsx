@@ -46,32 +46,72 @@ export default function Dashboard() {
 
   const handleCreatePRD = async (task: TaskCandidateWithDetails) => {
     try {
+      console.log('PRD 생성 시작:', task);
+      
       toast({
         title: "PRD 생성 중",
         description: `${task.title}에 대한 PRD를 생성하고 있습니다...`,
       });
 
-      const { data, error } = await supabase.functions.invoke('gemini-prd-generation', {
+      const response = await supabase.functions.invoke('gemini-prd-generation', {
         body: { task }
       });
 
-      if (error) throw error;
+      console.log('Edge Function Response:', response);
 
-      if (data.success && data.prd) {
-        toast({
-          title: "PRD 생성 완료",
-          description: "PRD가 성공적으로 생성되었습니다.",
-        });
-
-        await refetchPRDs();
-      } else {
-        throw new Error(data.error || 'PRD 생성에 실패했습니다.');
+      // 응답 상태 확인
+      if (response.error) {
+        console.error('Edge Function Error:', response.error);
+        throw new Error(`PRD 생성 실패: ${response.error.message || response.error}`);
       }
-    } catch (error) {
+
+      if (!response.data) {
+        throw new Error('PRD 생성 실패: 응답 데이터가 없습니다');
+      }
+
+      const data = response.data;
+      
+      if (!data.success) {
+        const errorMessage = data.error || 'PRD 생성에 실패했습니다';
+        console.error('PRD Generation failed:', errorMessage);
+        throw new Error(`PRD 생성 실패: ${errorMessage}`);
+      }
+
+      if (!data.prd) {
+        throw new Error('PRD 생성 실패: PRD 데이터가 응답에 포함되지 않았습니다');
+      }
+
+      console.log('PRD 생성 성공:', data.prd);
+      
+      toast({
+        title: "PRD 생성 완료",
+        description: "PRD가 성공적으로 생성되었습니다.",
+      });
+
+      await refetchPRDs();
+      
+    } catch (error: any) {
       console.error('PRD Creation Error:', error);
+      
+      let errorMessage = "PRD 생성 중 오류가 발생했습니다.";
+      
+      if (error.message) {
+        if (error.message.includes('Authorization')) {
+          errorMessage = "인증 오류가 발생했습니다. 다시 로그인해주세요.";
+        } else if (error.message.includes('GEMINI_API_KEY')) {
+          errorMessage = "AI 서비스 설정에 문제가 있습니다. 관리자에게 문의하세요.";
+        } else if (error.message.includes('rate limit')) {
+          errorMessage = "요청이 너무 많습니다. 잠시 후 다시 시도해주세요.";
+        } else if (error.message.includes('network') || error.message.includes('fetch')) {
+          errorMessage = "네트워크 연결에 문제가 있습니다. 인터넷 연결을 확인해주세요.";
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
       toast({
         title: "PRD 생성 실패",
-        description: error.message || "PRD 생성 중 오류가 발생했습니다.",
+        description: errorMessage,
         variant: "destructive",
       });
     }
