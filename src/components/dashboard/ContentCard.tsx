@@ -3,38 +3,28 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { FileText, Eye, Download, Share2, CheckCircle, Clock, AlertCircle } from "lucide-react";
-
-interface ContentData {
-  id: string;
-  title: string;
-  type: "faq" | "notice" | "guide" | "banner" | "message";
-  content: string;
-  status: "draft" | "review" | "approved" | "published";
-  createdAt: string;
-  updatedAt: string;
-  wordCount: number;
-  taskId?: string;
-}
+import { ContentAssetWithDetails } from "@/types/database";
 
 interface ContentCardProps {
-  content: ContentData;
+  content: ContentAssetWithDetails;
   className?: string;
+  onUpdateStatus?: (id: string, status: ContentAssetWithDetails['status']) => void;
 }
 
 const typeLabels = {
   faq: "FAQ",
-  notice: "공지사항",
-  guide: "가이드",
   banner: "배너",
-  message: "메시지",
+  notification: "알림",
+  guide: "가이드",
+  announcement: "공지사항",
 };
 
 const typeColors = {
   faq: "bg-blue-100 text-blue-700",
-  notice: "bg-green-100 text-green-700",
-  guide: "bg-purple-100 text-purple-700",
   banner: "bg-orange-100 text-orange-700",
-  message: "bg-pink-100 text-pink-700",
+  notification: "bg-pink-100 text-pink-700",
+  guide: "bg-purple-100 text-purple-700",
+  announcement: "bg-green-100 text-green-700",
 };
 
 const statusIcons = {
@@ -51,8 +41,21 @@ const statusColors = {
   published: "text-success bg-success/20",
 };
 
-export function ContentCard({ content, className }: ContentCardProps) {
+export function ContentCard({ content, className, onUpdateStatus }: ContentCardProps) {
   const StatusIcon = statusIcons[content.status];
+  
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('ko-KR', {
+      month: 'short',
+      day: 'numeric',
+    });
+  };
+
+  const handleExternalLink = () => {
+    if (content.output_url) {
+      window.open(content.output_url, '_blank');
+    }
+  };
   
   return (
     <Card className={cn("glass-card p-5 hover:shadow-lg transition-all duration-300 animate-slide-up", className)}>
@@ -83,33 +86,70 @@ export function ContentCard({ content, className }: ContentCardProps) {
           <h3 className="font-semibold text-foreground text-korean leading-snug line-clamp-2">
             {content.title}
           </h3>
-          <p className="text-sm text-muted-foreground text-korean leading-relaxed line-clamp-3">
-            {content.content}
-          </p>
+          {content.content && (
+            <p className="text-sm text-muted-foreground text-korean leading-relaxed line-clamp-3">
+              {content.content}
+            </p>
+          )}
         </div>
 
         {/* Metadata */}
         <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>{content.wordCount}자</span>
-          <span>업데이트: {content.updatedAt}</span>
+          <div className="flex items-center space-x-2">
+            <span>{content.word_count || 0}자</span>
+            {content.target_channel && (
+              <Badge variant="outline" className="text-xs">
+                {content.target_channel}
+              </Badge>
+            )}
+          </div>
+          <span>업데이트: {formatDate(content.updated_at)}</span>
         </div>
+
+        {content.task && (
+          <div className="text-xs text-muted-foreground">
+            관련 과제: {content.task.title}
+          </div>
+        )}
 
         {/* Actions */}
         <div className="flex items-center space-x-2 pt-3 border-t border-card-border">
           {content.status === "draft" && (
-            <Button size="sm" className="btn-gradient flex-1">
+            <Button 
+              size="sm" 
+              className="btn-gradient flex-1"
+              onClick={() => onUpdateStatus?.(content.id, 'review')}
+            >
               검토 요청
             </Button>
           )}
+          {content.status === "review" && (
+            <Button 
+              size="sm" 
+              className="btn-gradient flex-1"
+              onClick={() => onUpdateStatus?.(content.id, 'approved')}
+            >
+              승인
+            </Button>
+          )}
           {content.status === "approved" && (
-            <Button size="sm" className="btn-gradient flex-1">
+            <Button 
+              size="sm" 
+              className="btn-gradient flex-1"
+              onClick={() => onUpdateStatus?.(content.id, 'published')}
+            >
               게시하기
             </Button>
           )}
-          {content.status === "published" && (
-            <Button variant="outline" size="sm" className="flex-1">
+          {content.status === "published" && content.output_url && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="flex-1"
+              onClick={handleExternalLink}
+            >
               <Download className="h-4 w-4 mr-2" />
-              다운로드
+              열기
             </Button>
           )}
           <Button variant="outline" size="sm">

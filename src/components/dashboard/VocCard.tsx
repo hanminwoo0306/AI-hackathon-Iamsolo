@@ -2,50 +2,42 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { ThumbsDown, ThumbsUp, Minus, ExternalLink } from "lucide-react";
-
-interface VocData {
-  id: string;
-  text: string;
-  channel: string;
-  date: string;
-  sentiment: "positive" | "negative" | "neutral";
-  tag: "bug" | "request" | "compliment" | "suggestion";
-  priority: "high" | "medium" | "low";
-}
+import { ThumbsDown, ThumbsUp, Minus, ExternalLink, BarChart3 } from "lucide-react";
+import { FeedbackSourceWithAnalysis } from "@/types/database";
 
 interface VocCardProps {
-  voc: VocData;
+  feedbackSource: FeedbackSourceWithAnalysis;
   className?: string;
+  onAnalyze?: (source: FeedbackSourceWithAnalysis) => void;
+  onCreateTask?: (source: FeedbackSourceWithAnalysis) => void;
 }
 
-const sentimentIcons = {
-  positive: ThumbsUp,
-  negative: ThumbsDown,
-  neutral: Minus,
+const statusColors = {
+  active: "text-success bg-success/10",
+  inactive: "text-muted-foreground bg-muted/50",
+  archived: "text-warning bg-warning/10",
 };
 
-const sentimentColors = {
-  positive: "text-success bg-success/10",
-  negative: "text-destructive bg-destructive/10", 
-  neutral: "text-muted-foreground bg-muted/50",
+const analysisTypeLabels = {
+  sentiment: "감성분석",
+  categorization: "카테고리화",
+  summary: "요약",
+  task_extraction: "과제추출",
 };
 
-const tagColors = {
-  bug: "bg-destructive/10 text-destructive",
-  request: "bg-primary/10 text-primary",
-  compliment: "bg-success/10 text-success",
-  suggestion: "bg-warning/10 text-warning",
-};
+export function VocCard({ feedbackSource, className, onAnalyze, onCreateTask }: VocCardProps) {
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('ko-KR', {
+      month: 'short',
+      day: 'numeric',
+    });
+  };
 
-const priorityColors = {
-  high: "bg-destructive text-destructive-foreground",
-  medium: "bg-warning text-warning-foreground",
-  low: "bg-muted text-muted-foreground",
-};
-
-export function VocCard({ voc, className }: VocCardProps) {
-  const SentimentIcon = sentimentIcons[voc.sentiment];
+  const handleExternalLink = () => {
+    if (feedbackSource.source_url) {
+      window.open(feedbackSource.source_url, '_blank');
+    }
+  };
   
   return (
     <Card className={cn("glass-card p-5 hover:shadow-lg transition-all duration-300 animate-slide-up", className)}>
@@ -53,42 +45,78 @@ export function VocCard({ voc, className }: VocCardProps) {
         {/* Header */}
         <div className="flex items-start justify-between">
           <div className="flex items-center space-x-2">
-            <div className={cn("p-1.5 rounded-lg", sentimentColors[voc.sentiment])}>
-              <SentimentIcon className="h-4 w-4" />
+            <div className={cn("p-1.5 rounded-lg", statusColors[feedbackSource.status])}>
+              <BarChart3 className="h-4 w-4" />
             </div>
-            <Badge variant="outline" className={cn("text-xs", tagColors[voc.tag])}>
-              {voc.tag}
+            <Badge variant="outline" className="text-xs">
+              {feedbackSource.status === 'active' ? '활성' : feedbackSource.status === 'inactive' ? '비활성' : '보관됨'}
             </Badge>
-            <Badge className={cn("text-xs", priorityColors[voc.priority])}>
-              {voc.priority.toUpperCase()}
-            </Badge>
+            {feedbackSource.analysis_count && feedbackSource.analysis_count > 0 && (
+              <Badge className="text-xs bg-primary text-primary-foreground">
+                분석 {feedbackSource.analysis_count}회
+              </Badge>
+            )}
           </div>
-          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+          <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={handleExternalLink}>
             <ExternalLink className="h-4 w-4" />
           </Button>
         </div>
 
         {/* Content */}
         <div className="space-y-3">
-          <p className="text-sm text-foreground leading-relaxed text-korean line-clamp-3">
-            {voc.text}
-          </p>
+          <h3 className="font-semibold text-foreground text-korean leading-snug">
+            {feedbackSource.name}
+          </h3>
+          {feedbackSource.description && (
+            <p className="text-sm text-muted-foreground leading-relaxed text-korean line-clamp-2">
+              {feedbackSource.description}
+            </p>
+          )}
           
           <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span className="flex items-center space-x-2">
-              <span>출처: {voc.channel}</span>
+            <span>Google Sheets</span>
+            <span>
+              {feedbackSource.last_analyzed_at 
+                ? `분석: ${formatDate(feedbackSource.last_analyzed_at)}`
+                : `생성: ${formatDate(feedbackSource.created_at)}`
+              }
             </span>
-            <span>{voc.date}</span>
           </div>
+
+          {feedbackSource.latest_analysis && (
+            <div className="p-3 bg-muted/30 rounded-lg">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs font-medium text-foreground">최근 분석</span>
+                <Badge variant="outline" className="text-xs">
+                  {analysisTypeLabels[feedbackSource.latest_analysis.analysis_type]}
+                </Badge>
+              </div>
+              {feedbackSource.latest_analysis.summary && (
+                <p className="text-xs text-muted-foreground line-clamp-2">
+                  {feedbackSource.latest_analysis.summary}
+                </p>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Actions */}
         <div className="flex items-center space-x-2 pt-2 border-t border-card-border">
-          <Button variant="outline" size="sm" className="text-xs">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="text-xs flex-1"
+            onClick={() => onCreateTask?.(feedbackSource)}
+          >
             과제 생성
           </Button>
-          <Button variant="ghost" size="sm" className="text-xs">
-            세부 분석
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="text-xs"
+            onClick={() => onAnalyze?.(feedbackSource)}
+          >
+            분석
           </Button>
         </div>
       </div>
