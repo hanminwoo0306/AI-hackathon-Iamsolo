@@ -199,16 +199,10 @@ export default function Dashboard() {
                   placeholder="Google Spreadsheets 링크를 입력하세요" 
                   className="w-full"
                 />
-                <div className="flex space-x-2">
-                  <Button onClick={handleExecuteAnalysis} className="flex-1">
-                    <Play className="h-4 w-4 mr-2" />
-                    분석 실행
-                  </Button>
-                  <Button variant="outline">
-                    <ExternalLink className="h-4 w-4 mr-2" />
-                    링크 열기
-                  </Button>
-                </div>
+                <Button onClick={handleExecuteAnalysis} className="w-full">
+                  <Play className="h-4 w-4 mr-2" />
+                  분석 실행
+                </Button>
               </div>
               
               <div className="space-y-3 mt-6">
@@ -249,10 +243,10 @@ export default function Dashboard() {
                 console.log('[Dashboard] Passing tasks to TaskSelector:', { len: sortedTasks.length, totalCount, currentPage, totalPages });
                 return (
                   <TaskSelector
-                    tasks={sortedTasks}
-                    totalCount={totalCount}
+                    tasks={sortedTasks.slice(0, 5)}
+                    totalCount={Math.min(totalCount, 5)}
                     currentPage={currentPage}
-                    totalPages={totalPages}
+                    totalPages={Math.ceil(Math.min(totalCount, 5) / 5)}
                     onCreatePRD={handleCreatePRD}
                     onNextPage={nextPage}
                     onPrevPage={prevPage}
