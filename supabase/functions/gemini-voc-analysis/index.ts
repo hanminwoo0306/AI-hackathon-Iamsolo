@@ -6,38 +6,118 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// RFC4180 compliant CSV parser for handling quotes and commas in data
+function parseCSVLine(line: string): string[] {
+  const result = [];
+  let current = '';
+  let inQuotes = false;
+  
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    
+    if (char === '"') {
+      if (inQuotes && line[i + 1] === '"') {
+        // Handle escaped quotes
+        current += '"';
+        i++; // Skip next quote
+      } else {
+        // Toggle quote state
+        inQuotes = !inQuotes;
+      }
+    } else if (char === ',' && !inQuotes) {
+      // End of field
+      result.push(current);
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+  
+  // Add the last field
+  result.push(current);
+  
+  return result;
+}
+
 async function readGoogleSheet(spreadsheetUrl: string) {
   try {
-    // Google Sheets를 CSV 형태로 읽기 위해 URL 변환
-    // https://docs.google.com/spreadsheets/d/{id}/edit -> https://docs.google.com/spreadsheets/d/{id}/export?format=csv
-    const sheetId = spreadsheetUrl.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/)?.[1];
-    if (!sheetId) {
+    console.log(`Fetching Google Sheet from: ${spreadsheetUrl}`);
+    
+    // Convert Google Sheets URL to CSV export URL while preserving gid
+    let csvUrl = '';
+    
+    // Extract sheet ID and gid (if present) from various URL formats
+    const sheetIdMatch = spreadsheetUrl.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+    if (!sheetIdMatch) {
       throw new Error('유효하지 않은 Google Spreadsheets URL입니다.');
     }
     
-    const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv`;
-    console.log('Fetching Google Sheet from:', csvUrl);
+    const sheetId = sheetIdMatch[1];
+    
+    // Handle different URL formats and preserve gid
+    if (spreadsheetUrl.includes('#gid=')) {
+      const gidMatch = spreadsheetUrl.match(/gid=(\d+)/);
+      const gid = gidMatch ? gidMatch[1] : '0';
+      csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`;
+    } else {
+      csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv`;
+    }
+    
+    console.log(`Converted CSV URL: ${csvUrl}`);
     
     const response = await fetch(csvUrl);
+    
+    // Check if request was successful
     if (!response.ok) {
-      throw new Error(`Google Spreadsheets 조회 실패: ${response.status}. 문서가 공개되어 있는지 확인해주세요.`);
+      console.error(`Failed to fetch Google Sheet: ${response.status} ${response.statusText}`);
+      throw new Error(`Google Sheets에 접근할 수 없습니다. 문서가 공개되어 있는지 확인해주세요. (Status: ${response.status})`);
+    }
+    
+    // Check Content-Type to ensure we got CSV, not HTML
+    const contentType = response.headers.get('content-type') || '';
+    if (contentType.includes('text/html')) {
+      console.error('Received HTML instead of CSV - sheet may be private');
+      throw new Error('Google Sheets 문서에 접근할 수 없습니다. 문서가 "링크가 있는 모든 사용자"로 공유되어 있는지 확인해주세요.');
     }
     
     const csvText = await response.text();
-    console.log('CSV data length:', csvText.length);
+    console.log(`CSV data length: ${csvText.length}`);
     
-    // CSV 파싱 (간단한 구현)
-    const lines = csvText.split('\n').filter(line => line.trim());
-    const data = lines.slice(1).map(line => { // 첫 번째 줄은 헤더이므로 제외
-      const columns = line.split(',').map(col => col.replace(/"/g, '').trim());
-      return {
-        date: columns[0] || '',
-        feedback: columns[1] || ''
-      };
-    }).filter(row => row.feedback); // 피드백이 있는 행만 필터링
+    // Check if we got an HTML error page instead of CSV
+    if (csvText.includes('<html') || csvText.includes('<!DOCTYPE')) {
+      console.error('Received HTML page instead of CSV data');
+      throw new Error('Google Sheets 문서에 접근할 수 없습니다. 문서 공유 설정을 확인해주세요.');
+    }
     
-    console.log('Parsed feedback data count:', data.length);
-    return data;
+    // Parse CSV using RFC4180 compliant parsing
+    const feedbackData = [];
+    const lines = csvText.split(/\r?\n/);
+    
+    for (let i = 1; i < lines.length; i++) { // Skip header row
+      const line = lines[i].trim();
+      if (!line) continue;
+      
+      const columns = parseCSVLine(line);
+      if (columns.length >= 2) {
+        const date = columns[0]?.trim() || '';
+        const feedback = columns[1]?.trim() || '';
+        
+        if (feedback && feedback.length > 5) { // Minimum feedback length
+          feedbackData.push({
+            date: date,
+            feedback: feedback
+          });
+        }
+      }
+    }
+    
+    console.log(`Parsed feedback data count: ${feedbackData.length}`);
+    
+    if (feedbackData.length === 0) {
+      throw new Error('Google Spreadsheets에서 유효한 피드백 데이터를 찾을 수 없습니다. 2번째 컬럼에 피드백 내용이 있는지 확인해주세요.');
+    }
+    
+    return feedbackData;
   } catch (error) {
     console.error('Google Sheet reading error:', error);
     throw error;
@@ -54,21 +134,30 @@ serve(async (req) => {
     const { spreadsheetUrl, userPrompt } = await req.json();
     
     if (!spreadsheetUrl) {
-      throw new Error('Google Spreadsheets URL이 필요합니다.');
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Google Spreadsheets URL이 필요합니다.'
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
     if (!geminiApiKey) {
-      throw new Error('GEMINI_API_KEY가 설정되지 않았습니다.');
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'GEMINI_API_KEY가 설정되지 않았습니다.'
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     console.log('Starting VOC analysis with Gemini API...');
 
     // Google Spreadsheets 데이터 읽기
     const feedbackData = await readGoogleSheet(spreadsheetUrl);
-    if (feedbackData.length === 0) {
-      throw new Error('Google Spreadsheets에서 유효한 피드백 데이터를 찾을 수 없습니다.');
-    }
 
     // 피드백 데이터를 텍스트로 결합
     const feedbackTexts = feedbackData.map((item, index) => 
@@ -235,11 +324,22 @@ ${feedbackTexts}
 
   } catch (error) {
     console.error('Error in gemini-voc-analysis function:', error);
+    
+    // Determine appropriate status code based on error type
+    let statusCode = 500;
+    if (error.message.includes('접근할 수 없습니다') || error.message.includes('공유되어')) {
+      statusCode = 403; // Forbidden - access denied
+    } else if (error.message.includes('유효하지 않은') || error.message.includes('URL이 필요')) {
+      statusCode = 400; // Bad Request - invalid input
+    } else if (error.message.includes('데이터를 찾을 수 없습니다')) {
+      statusCode = 422; // Unprocessable Entity - valid request but no data
+    }
+    
     return new Response(JSON.stringify({
       success: false,
       error: error.message
     }), {
-      status: 500,
+      status: statusCode,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
