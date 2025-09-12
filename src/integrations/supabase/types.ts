@@ -18,7 +18,7 @@ export type Database = {
         Row: {
           content: string | null
           created_at: string
-          created_by: string
+          created_by: string | null
           id: string
           output_url: string | null
           prd_id: string | null
@@ -32,7 +32,7 @@ export type Database = {
         Insert: {
           content?: string | null
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           id?: string
           output_url?: string | null
           prd_id?: string | null
@@ -46,7 +46,7 @@ export type Database = {
         Update: {
           content?: string | null
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           id?: string
           output_url?: string | null
           prd_id?: string | null
@@ -192,45 +192,6 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           id?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      service_launches: {
-        Row: {
-          created_at: string
-          created_by: string
-          generated_content: Json | null
-          id: string
-          image_1_url: string | null
-          image_2_url: string | null
-          image_3_url: string | null
-          prd_id: string
-          status: string | null
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          created_by?: string
-          generated_content?: Json | null
-          id?: string
-          image_1_url?: string | null
-          image_2_url?: string | null
-          image_3_url?: string | null
-          prd_id: string
-          status?: string | null
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          created_by?: string
-          generated_content?: Json | null
-          id?: string
-          image_1_url?: string | null
-          image_2_url?: string | null
-          image_3_url?: string | null
-          prd_id?: string
-          status?: string | null
           updated_at?: string
         }
         Relationships: []

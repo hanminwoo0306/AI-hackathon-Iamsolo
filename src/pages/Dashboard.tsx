@@ -6,15 +6,12 @@ import { ContentCard } from "@/components/dashboard/ContentCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { PRDDetailModal } from "@/components/dashboard/PRDDetailModal";
-import { ServiceLaunchModal } from "@/components/dashboard/ServiceLaunchModal";
-import { MessageSquare, FileText, Zap, Plus, ExternalLink, Play, Edit, Eye, Calendar, Rocket } from "lucide-react";
+import { MessageSquare, FileText, Zap, Plus, ExternalLink, Play } from "lucide-react";
 import { useFeedbackSources } from "@/hooks/useFeedbackSources";
 import { useTaskCandidates } from "@/hooks/useTaskCandidates";
 import { useContentAssets } from "@/hooks/useContentAssets";
 import { usePRDDrafts } from "@/hooks/usePRDDrafts";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { TaskCandidateWithDetails, PRDDraft } from "@/types/database";
 import { useState } from "react";
@@ -26,7 +23,6 @@ export default function Dashboard() {
   const { prdDrafts, loading: prdLoading, refetch: refetchPRDs } = usePRDDrafts();
   const { toast } = useToast();
   const [selectedPRD, setSelectedPRD] = useState<PRDDraft | null>(null);
-  const [serviceLaunchPRD, setServiceLaunchPRD] = useState<PRDDraft | null>(null);
 
   const handleAnalyzeFeedback = (source: any) => {
     toast({
@@ -275,82 +271,79 @@ export default function Dashboard() {
             <CardContent>
               <div className="space-y-3">
                 {prdDrafts.slice(0, 5).map((prd) => (
-                  <div key={prd.id} className="p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <h4 className="font-medium text-korean mb-2">{prd.title}</h4>
-                        <div className="flex items-center space-x-4 text-sm text-muted-foreground mb-3">
-                          <span className="flex items-center">
-                            <Badge variant="outline" className="mr-1">
-                              {prd.status}
-                            </Badge>
-                          </span>
-                          <span>버전: {prd.version}</span>
-                          <span>{new Date(prd.created_at).toLocaleDateString('ko-KR')}</span>
-                        </div>
-                        {/* PRD 내용 미리보기 */}
-                        <div className="text-sm text-muted-foreground">
-                          {prd.background ? (
-                            <p className="line-clamp-2">{prd.background.slice(0, 100)}...</p>
-                          ) : (
-                            <p className="italic">PRD 내용이 생성되지 않았습니다.</p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex space-x-2 mt-3">
+                  <div key={prd.id} className="p-3 border rounded-lg">
+                    <h4 className="font-medium text-korean">{prd.title}</h4>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      상태: {prd.status} | 버전: {prd.version} | {new Date(prd.created_at).toLocaleDateString('ko-KR')}
+                    </p>
+                    <div className="flex space-x-2 mt-2">
                       <Button 
                         variant="outline" 
                         size="sm"
                         onClick={() => setSelectedPRD(prd)}
                       >
-                        <Edit className="h-4 w-4 mr-1" />
                         편집
                       </Button>
-                      <PRDDetailModal prd={prd} onEdit={setSelectedPRD} />
-                      <Button 
-                        variant="default" 
-                        size="sm"
-                        onClick={() => setServiceLaunchPRD(prd)}
-                      >
-                        <Rocket className="h-4 w-4 mr-1" />
-                        서비스 런칭
+                      <Button variant="outline" size="sm">
+                        전체 조회
                       </Button>
                     </div>
                   </div>
                 ))}
                 {prdDrafts.length === 0 && (
                   <div className="text-center py-8 text-muted-foreground">
-                    <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>아직 생성된 PRD가 없습니다.</p>
-                    <p className="text-sm mt-2">위의 과제 후보에서 PRD를 생성해보세요.</p>
+                    아직 생성된 PRD가 없습니다.
                   </div>
                 )}
               </div>
             </CardContent>
           </Card>
 
-          {/* 4. 서비스 런칭 안내 영역 */}
+          {/* 4. 자동화 실행 영역 */}
           <Card className="glass-card">
             <CardHeader>
               <CardTitle className="text-korean flex items-center">
-                <Rocket className="h-5 w-5 mr-2" />
-                서비스 런칭 준비
+                <Zap className="h-5 w-5 mr-2" />
+                자동화 실행
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8">
-                <Rocket className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <p className="text-muted-foreground mb-4">
-                  PRD를 선택한 후 서비스 런칭 버튼을 클릭하여<br />
-                  서비스 런칭에 필요한 콘텐츠를 자동 생성하세요.
-                </p>
-                <div className="text-sm text-muted-foreground space-y-1">
-                  <p>• 서비스 화면 이미지 3개 업로드</p>
-                  <p>• 고객센터 설명자료 자동 생성</p>
-                  <p>• FAQ, 서비스 소개 콘텐츠 생성</p>
-                  <p>• 알림 메시지, 배너 메시지 생성</p>
-                </div>
+              <div className="grid grid-cols-1 gap-3">
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start"
+                  onClick={() => handleGenerateContent("고객센터 설명자료")}
+                >
+                  고객센터 설명자료 생성
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start"
+                  onClick={() => handleGenerateContent("FAQ")}
+                >
+                  FAQ 작성
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start"
+                  onClick={() => handleGenerateContent("서비스 콘텐츠")}
+                >
+                  서비스 콘텐츠 생성
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start"
+                  onClick={() => handleGenerateContent("알림 메시지")}
+                >
+                  알림 메시지 생성
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start"
+                  onClick={() => handleGenerateContent("배너 메시지")}
+                >
+                  배너 메시지 생성
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -370,14 +363,6 @@ export default function Dashboard() {
               />
             </div>
           </div>
-        )}
-
-        {/* Service Launch Modal */}
-        {serviceLaunchPRD && (
-          <ServiceLaunchModal
-            prd={serviceLaunchPRD}
-            onClose={() => setServiceLaunchPRD(null)}
-          />
         )}
       </div>
     </div>

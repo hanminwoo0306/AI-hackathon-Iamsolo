@@ -76,16 +76,3 @@ export interface ContentAssetWithDetails extends ContentAsset {
   prd?: PRDDraft;
   word_count?: number;
 }
-
-export interface ServiceLaunch {
-  id: string;
-  prd_id: string;
-  image_1_url?: string;
-  image_2_url?: string;
-  image_3_url?: string;
-  generated_content?: any;
-  status: 'preparing' | 'ready' | 'launched';
-  created_by: string;
-  created_at: string;
-  updated_at: string;
-}
