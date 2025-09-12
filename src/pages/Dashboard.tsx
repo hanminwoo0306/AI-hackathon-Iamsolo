@@ -6,7 +6,9 @@ import { ContentCard } from "@/components/dashboard/ContentCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { MessageSquare, FileText, Zap, Plus, ExternalLink, Play } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { PRDDetailModal } from "@/components/dashboard/PRDDetailModal";
+import { MessageSquare, FileText, Zap, Plus, ExternalLink, Play, Edit, Eye, Calendar } from "lucide-react";
 import { useFeedbackSources } from "@/hooks/useFeedbackSources";
 import { useTaskCandidates } from "@/hooks/useTaskCandidates";
 import { useContentAssets } from "@/hooks/useContentAssets";
@@ -271,28 +273,47 @@ export default function Dashboard() {
             <CardContent>
               <div className="space-y-3">
                 {prdDrafts.slice(0, 5).map((prd) => (
-                  <div key={prd.id} className="p-3 border rounded-lg">
-                    <h4 className="font-medium text-korean">{prd.title}</h4>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      상태: {prd.status} | 버전: {prd.version} | {new Date(prd.created_at).toLocaleDateString('ko-KR')}
-                    </p>
-                    <div className="flex space-x-2 mt-2">
+                  <div key={prd.id} className="p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h4 className="font-medium text-korean mb-2">{prd.title}</h4>
+                        <div className="flex items-center space-x-4 text-sm text-muted-foreground mb-3">
+                          <span className="flex items-center">
+                            <Badge variant="outline" className="mr-1">
+                              {prd.status}
+                            </Badge>
+                          </span>
+                          <span>버전: {prd.version}</span>
+                          <span>{new Date(prd.created_at).toLocaleDateString('ko-KR')}</span>
+                        </div>
+                        {/* PRD 내용 미리보기 */}
+                        <div className="text-sm text-muted-foreground">
+                          {prd.background ? (
+                            <p className="line-clamp-2">{prd.background.slice(0, 100)}...</p>
+                          ) : (
+                            <p className="italic">PRD 내용이 생성되지 않았습니다.</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex space-x-2 mt-3">
                       <Button 
                         variant="outline" 
                         size="sm"
                         onClick={() => setSelectedPRD(prd)}
                       >
+                        <Edit className="h-4 w-4 mr-1" />
                         편집
                       </Button>
-                      <Button variant="outline" size="sm">
-                        전체 조회
-                      </Button>
+                      <PRDDetailModal prd={prd} onEdit={setSelectedPRD} />
                     </div>
                   </div>
                 ))}
                 {prdDrafts.length === 0 && (
                   <div className="text-center py-8 text-muted-foreground">
-                    아직 생성된 PRD가 없습니다.
+                    <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>아직 생성된 PRD가 없습니다.</p>
+                    <p className="text-sm mt-2">위의 과제 후보에서 PRD를 생성해보세요.</p>
                   </div>
                 )}
               </div>
