@@ -17,7 +17,7 @@ export function useTaskCandidates() {
       setLoading(true);
       setError(null);
 
-      console.log('Fetching task candidates...', { page, size });
+      console.log('[Tasks] Fetching task candidates...', { page, size });
 
       // 총 개수 조회 (head 사용하지 않음)
       const { count, error: countError } = await supabase
@@ -26,11 +26,11 @@ export function useTaskCandidates() {
         .range(0, 0);
 
       if (countError) {
-        console.error('Count error:', countError);
+        console.error('[Tasks] Count error:', countError);
         throw countError;
       }
 
-      console.log('Total count:', count);
+      console.log('[Tasks] Total count:', count);
       setTotalCount(count || 0);
 
       // 페이지네이션된 데이터 조회
@@ -44,31 +44,33 @@ export function useTaskCandidates() {
         .range(from, to);
 
       if (error) {
-        console.error('Data fetch error:', error);
+        console.error('[Tasks] Data fetch error:', error);
         throw error;
       }
 
       let rows = data || [];
+      console.log('[Tasks] Page result:', { from, to, rows: rows.length });
 
       // Fallback: 데이터가 비어있다면 범위 없이 재조회하여 표시는 보장
       if ((rows?.length || 0) === 0) {
-        console.warn('Primary range query returned 0 items. Falling back to limit query.');
+        console.warn('[Tasks] Primary range query returned 0 items. Falling back to limit query.');
         const { data: fallback, error: fbError, count: fbCount } = await supabase
           .from('task_candidates')
           .select('*', { count: 'exact' })
           .order('created_at', { ascending: false })
           .limit(size);
         if (fbError) {
-          console.error('Fallback fetch error:', fbError);
+          console.error('[Tasks] Fallback fetch error:', fbError);
         } else {
           rows = fallback || [];
+          console.log('[Tasks] Fallback result:', { rows: rows.length });
           if (!count && typeof fbCount === 'number') {
             setTotalCount(fbCount);
           }
         }
       }
 
-      console.log('Fetched task candidates:', rows.length, 'items');
+      console.log('[Tasks] Fetched task candidates:', rows.length, 'items');
 
       const tasksWithDetails = rows.map(task => ({
         ...task,
@@ -80,6 +82,7 @@ export function useTaskCandidates() {
 
       setTaskCandidates(tasksWithDetails);
       setCurrentPage(page);
+      console.log('[Tasks] Set state:', { len: tasksWithDetails.length, page, totalCount });
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch task candidates';
       console.error('fetchTaskCandidates error:', err);

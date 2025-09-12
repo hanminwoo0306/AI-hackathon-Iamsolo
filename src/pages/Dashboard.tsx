@@ -241,24 +241,29 @@ export default function Dashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <TaskSelector
-                tasks={taskCandidates
+              {(() => {
+                const sortedTasks = taskCandidates
                   .sort((a, b) => {
                     // 개발비용 * 효과점수가 낮을수록 우선순위가 높음
                     const aPriority = (a.development_cost || 1) * (a.effect_score || 1);
                     const bPriority = (b.development_cost || 1) * (b.effect_score || 1);
                     return aPriority - bPriority;
-                  })
-                }
-                totalCount={totalCount}
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onCreatePRD={handleCreatePRD}
-                onNextPage={nextPage}
-                onPrevPage={prevPage}
-                onGoToPage={goToPage}
-                loading={tasksLoading}
-              />
+                  });
+                console.log('[Dashboard] Passing tasks to TaskSelector:', { len: sortedTasks.length, totalCount, currentPage, totalPages });
+                return (
+                  <TaskSelector
+                    tasks={sortedTasks}
+                    totalCount={totalCount}
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onCreatePRD={handleCreatePRD}
+                    onNextPage={nextPage}
+                    onPrevPage={prevPage}
+                    onGoToPage={goToPage}
+                    loading={tasksLoading}
+                  />
+                );
+              })()}
             </CardContent>
           </Card>
 

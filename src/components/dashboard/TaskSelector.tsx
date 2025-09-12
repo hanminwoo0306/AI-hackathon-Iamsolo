@@ -45,6 +45,8 @@ export function TaskSelector({
   loading 
 }: TaskSelectorProps) {
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  
+  console.log('[TaskSelector] Props received:', { len: tasks.length, loading, currentPage, totalPages, totalCount });
 
   const selectedTask = tasks.find(task => task.id === selectedTaskId);
 
