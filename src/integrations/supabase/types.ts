@@ -238,7 +238,7 @@ export type Database = {
       task_candidates: {
         Row: {
           created_at: string
-          created_by: string | null
+          created_by: string
           description: string | null
           development_cost: number | null
           effect_score: number | null
@@ -253,7 +253,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          created_by?: string | null
+          created_by?: string
           description?: string | null
           development_cost?: number | null
           effect_score?: number | null
@@ -268,7 +268,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          created_by?: string | null
+          created_by?: string
           description?: string | null
           development_cost?: number | null
           effect_score?: number | null
