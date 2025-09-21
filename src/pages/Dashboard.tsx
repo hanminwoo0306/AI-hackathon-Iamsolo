@@ -248,6 +248,17 @@ export default function Dashboard() {
                   placeholder="Google Spreadsheets 링크를 입력하세요" 
                   className="w-full"
                 />
+                <div className="text-sm text-muted-foreground">
+                  <span className="font-medium">예제 링크:</span>{" "}
+                  <a 
+                    href="https://docs.google.com/spreadsheets/d/14zHuc57hBKbJWTkwmiC-CijFBGedkHQzBETxrNapOcs/edit?gid=624713183#gid=624713183"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline"
+                  >
+                    샘플 VOC 데이터 보기
+                  </a>
+                </div>
                 <Button onClick={handleExecuteAnalysis} className="w-full">
                   <Play className="h-4 w-4 mr-2" />
                   분석 실행

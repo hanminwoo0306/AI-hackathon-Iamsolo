@@ -1,4 +1,3 @@
-import { Sidebar } from "@/components/layout/Sidebar";
 import Dashboard from "./Dashboard";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,11 +17,8 @@ const Index = () => {
   }, [navigate]);
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-background to-surface">
-      <Sidebar />
-      <main className="flex-1 overflow-auto">
-        <Dashboard />
-      </main>
+    <div className="min-h-screen bg-gradient-to-br from-background to-surface">
+      <Dashboard />
     </div>
   );
 };

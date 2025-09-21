@@ -9,7 +9,7 @@ export function useTaskCandidates() {
   const [error, setError] = useState<string | null>(null);
   const [totalCount, setTotalCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(20);
+  const [pageSize] = useState(10);
   const { toast } = useToast();
 
   const fetchTaskCandidates = async (page: number = 1, size: number = pageSize) => {
