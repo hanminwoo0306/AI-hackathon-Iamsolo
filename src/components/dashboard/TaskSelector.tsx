@@ -156,7 +156,7 @@ export function TaskSelector({
         <div className="pt-4 border-t">
           <div className="flex items-center justify-between mb-4">
             <div className="text-sm text-muted-foreground">
-              총 {totalCount}개 중 {((currentPage - 1) * 20) + 1}-{Math.min(currentPage * 20, totalCount)}개 표시
+              총 {totalCount}개 중 {((currentPage - 1) * 10) + 1}-{Math.min(currentPage * 10, totalCount)}개 표시
             </div>
             <div className="flex items-center space-x-2">
               <Button 
